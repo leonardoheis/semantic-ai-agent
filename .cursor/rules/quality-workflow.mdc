@@ -1,0 +1,12 @@
+---
+description: Quality checks, commit policy, and dependency management
+alwaysApply: true
+---
+
+# Quality Workflow
+
+- Always run `uv run poe check` after making any change and fix all errors before proceeding.
+- Never commit or push — the user handles all git operations explicitly.
+- Add new dependencies with `uv add <package>` (updates both `pyproject.toml` and `uv.lock`).
+- Ruff is configured with line-length 100, target Python 3.10, and extends to notebooks.
+- `gitleaks` pre-commit hook blocks commits containing secrets — never hardcode credentials.

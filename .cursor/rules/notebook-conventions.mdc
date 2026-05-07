@@ -1,0 +1,12 @@
+---
+description: Jupyter notebook conventions for import ordering and cell structure
+globs: notebooks/*.ipynb
+alwaysApply: false
+---
+
+# Notebook Conventions
+
+- The first cell is always the import cell. All `import` statements go there — never scatter imports across later cells.
+- Import order: stdlib, then third-party, then local — alphabetically within each group (ruff-compatible).
+- Notebooks are numbered and run in order; respect data dependencies between them.
+- `F401` (unused imports) is intentionally ignored in notebooks — exploratory cells may import without using.

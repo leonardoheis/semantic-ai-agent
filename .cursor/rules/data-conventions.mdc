@@ -1,0 +1,12 @@
+---
+description: Data directory conventions and access rules
+globs: data/**
+alwaysApply: false
+---
+
+# Data Conventions
+
+- `data/raw/` is **READ ONLY** — never modify or overwrite original source files.
+- `data/interim/` holds intermediate outputs produced during processing.
+- `data/processed/` holds final, model-ready features and train/test splits.
+- `data/` is not versioned in git — only `.gitkeep` files are committed. Datasets must be provided manually in `data/raw/`.
