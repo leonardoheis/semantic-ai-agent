@@ -102,7 +102,7 @@ class CacheEvaluator:
         self,
         true_labels: List[bool],
         cache_results: List[CacheResults],
-        is_from_full_retrieval: bool = False
+        is_from_full_retrieval: bool = False,
     ):
         self.true_labels = np.array(true_labels)
         self.cache_results = np.array(cache_results)
@@ -116,22 +116,20 @@ class CacheEvaluator:
     def matches_df(self) -> pd.DataFrame:
         """Get DataFrame of query-match-distance-label tuples."""
         query = [r.query for r in self.cache_results]
-        match = [
-            r.matches[0].prompt if len(r.matches) > 0 else None
-            for r in self.cache_results
-        ]
+        match = [r.matches[0].prompt if len(r.matches) > 0 else None for r in self.cache_results]
         distance = [
-            r.matches[0].vector_distance if len(r.matches) > 0 else None
-            for r in self.cache_results
+            r.matches[0].vector_distance if len(r.matches) > 0 else None for r in self.cache_results
         ]
         true_label = self.true_labels.tolist()
 
-        return pd.DataFrame({
-            "query": query,
-            "match": match,
-            "distance": distance,
-            "true_label": true_label,
-        })
+        return pd.DataFrame(
+            {
+                "query": query,
+                "match": match,
+                "distance": distance,
+                "true_label": true_label,
+            }
+        )
 
     def get_metrics(self, distance_threshold: Optional[float] = None) -> Dict[str, Any]:
         """
@@ -147,10 +145,9 @@ class CacheEvaluator:
         """
         T = 1 if distance_threshold is None else distance_threshold
 
-        has_retrieval = np.array([
-            len([m for m in it.matches if m.vector_distance < T]) > 0
-            for it in self.cache_results
-        ])
+        has_retrieval = np.array(
+            [len([m for m in it.matches if m.vector_distance < T]) > 0 for it in self.cache_results]
+        )
         true_labels = np.array(self.true_labels)
 
         if self.is_from_full_retrieval:
@@ -195,8 +192,8 @@ class CacheEvaluator:
         - all_metrics: dict of metric arrays over thresholds
         - thresholds: array of tested thresholds
         """
-        thresholds = np.linspace(*threshold_range, num_samples)
-        all_metrics: Dict[str, List] = {}
+        thresholds = np.linspace(threshold_range[0], threshold_range[1], num_samples)
+        all_metrics: Dict[str, List[Any]] = {}
 
         for threshold in thresholds:
             metrics = self.get_metrics(float(threshold))
@@ -206,13 +203,13 @@ class CacheEvaluator:
                         all_metrics[key] = []
                     all_metrics[key].append(value)
 
-        all_metrics = {k: np.array(v) for k, v in all_metrics.items()}
-        best_idx = np.argmax(all_metrics[metric_to_maximize])
+        all_metrics_arr = {k: np.array(v) for k, v in all_metrics.items()}
+        best_idx = int(np.argmax(all_metrics_arr[metric_to_maximize]))
         best_threshold = float(thresholds[best_idx])
 
         return {
             "best_threshold": best_threshold,
-            "all_metrics": all_metrics,
+            "all_metrics": all_metrics_arr,
             "thresholds": thresholds,
         }
 
@@ -278,11 +275,7 @@ class PerfEval:
         self.total_queries = n
 
     def record_llm_call(
-        self,
-        model: str,
-        input_text: str,
-        output_text: str,
-        provider: str = "openai"
+        self, model: str, input_text: str, output_text: str, provider: str = "openai"
     ):
         """
         Record an LLM call for cost tracking.
@@ -296,12 +289,14 @@ class PerfEval:
         input_tokens = count_tokens(input_text, model)
         output_tokens = count_tokens(output_text, model)
 
-        self.llm_calls.append({
-            "model": model,
-            "provider": provider,
-            "in": input_tokens,
-            "out": output_tokens,
-        })
+        self.llm_calls.append(
+            {
+                "model": model,
+                "provider": provider,
+                "in": input_tokens,
+                "out": output_tokens,
+            }
+        )
 
     def _stats(self, values: List[float]) -> Dict[str, float]:
         """Calculate statistics for a list of duration values."""
@@ -397,7 +392,9 @@ class PerfEval:
             for label in labels:
                 if label in metrics["by_label"]:
                     stats = metrics["by_label"][label]
-                    lines.append(f"  {label}: {stats['count']} calls, {stats['average_latency_ms']:.1f}ms avg")
+                    lines.append(
+                        f"  {label}: {stats['count']} calls, {stats['average_latency_ms']:.1f}ms avg"
+                    )
 
         if costs["calls"] > 0:
             lines.append("")

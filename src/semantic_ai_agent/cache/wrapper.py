@@ -68,6 +68,7 @@ class CacheResult(BaseModel):
 
 class CacheResults(BaseModel):
     """Container for cache check results."""
+
     query: str
     matches: List[CacheResult]
 
@@ -109,9 +110,7 @@ class SemanticCacheWrapper:
         ttl: int = 3600,
         redis_url: Optional[str] = None,
     ):
-        redis_conn_url = redis_url or default_config.get(
-            "redis_url", "redis://localhost:6379"
-        )
+        redis_conn_url = redis_url or str(default_config.get("redis_url", "redis://localhost:6379"))
         self.redis = try_connect_to_redis(redis_conn_url)
 
         self.embeddings_cache = EmbeddingsCache(redis_client=self.redis, ttl=ttl * 24)
@@ -251,9 +250,7 @@ class SemanticCacheWrapper:
         Returns:
             CacheResults object with matches
         """
-        _num_results = (
-            num_results if not self.has_reranker() else max(10, 3 * num_results)
-        )
+        _num_results = num_results if not self.has_reranker() else max(10, 3 * num_results)
         candidates = self.cache.check(
             query, distance_threshold=distance_threshold, num_results=_num_results
         )
@@ -276,7 +273,9 @@ class SemanticCacheWrapper:
                 result["reranker_score"] = result.get("reranker_score")
                 result["reranker_reason"] = result.get("reranker_reason")
                 if use_reranker_distance:
-                    result["vector_distance"] = result.get("reranker_distance", result["vector_distance"])
+                    result["vector_distance"] = result.get(
+                        "reranker_distance", result["vector_distance"]
+                    )
 
             results.append(CacheResult(**result))
 
@@ -304,9 +303,7 @@ class SemanticCacheWrapper:
         """
         results: List[CacheResults] = []
         for q in tqdm(queries, disable=not show_progress):
-            cache_results = self.check(
-                q, distance_threshold, num_results, use_reranker_distance
-            )
+            cache_results = self.check(q, distance_threshold, num_results, use_reranker_distance)
             results.append(cache_results)
         return results
 
