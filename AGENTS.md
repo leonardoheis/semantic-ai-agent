@@ -30,6 +30,8 @@ uv run poe nbtest             # pytest --nbmake notebooks/ (slow, needs data/)
 Always run `uv run poe check` after making any change and fix any errors.
 Do not commit or push — the user handles all commits and pushes explicitly.
 
+Don't read any .env file, use the .env.example file to understand the environment variables and create your own .env file.
+
 ## Project structure
 
 ```
