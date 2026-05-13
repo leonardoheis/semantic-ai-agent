@@ -1,0 +1,81 @@
+---
+description: HR Policy FAQ semantic cache design specification
+globs: src/semantic_ai_agent/cache/**,notebooks/*.ipynb
+alwaysApply: false
+---
+
+# HR Policy FAQ Semantic Cache
+
+**System Name:** HR Policy FAQ Cache
+
+**Purpose:** Cache responses to employee HR policy questions (vacation, benefits, payroll, leave, remote work, expenses, onboarding) to reduce LLM API costs and deliver instant answers.
+
+**Domain:** Internal HR assistant handling common employee inquiries about company policies. Employees frequently ask the same policy questions using varied phrasing — e.g., "How many vacation days do I get?" vs "What's the PTO allowance?" — making this domain ideal for semantic caching.
+
+## Embedding Strategy
+
+- **Model:** `all-MiniLM-L6-v2` (sentence-transformers)
+- **Dimension:** 384
+- **Rationale:** Fast inference, small footprint, and strong performance on short Q&A text typical of HR policy questions. Well-suited for English-language policy queries under 128 tokens.
+
+## Cache Configuration
+
+- **Similarity Threshold:** 0.87 cosine similarity (distance threshold ≈ 0.13)
+- **Distance Metric:** Cosine similarity
+- **TTL:** 30 days (2,592,000 seconds) — company policies are stable but reviewed monthly
+- **Index Type:** HNSW (faster approximate retrieval, good for growing FAQ sets)
+
+## Cache Strategy
+
+**Cache Write Triggers:**
+- After successfully generating an LLM response for a cache miss
+- Store: `{query_embedding, response_text, category_tag, timestamp}`
+- Initial hydration with curated FAQ pairs across all policy categories
+
+**Cache Miss Handling:**
+1. Normalize the incoming query (lowercase, trim whitespace)
+2. Check semantic cache using the configured distance threshold
+3. If miss → call LLM API to generate a response
+4. Store the new response in the cache for future hits
+
+**Cache Invalidation:**
+- TTL-based expiration (30 days)
+- Manual flush when company policies are updated (e.g., benefits changes during open enrollment)
+- Category-scoped invalidation: policy updates in one area (e.g., PTO) trigger cache clear only for that category
+
+## Performance Goals
+
+- **Target Hit Rate:** 65%+
+- **Cache Lookup Latency:** < 5ms
+- **Cost Reduction:** 70% fewer LLM API calls
+- **Precision:** > 95% (cached responses must accurately match user intent)
+
+## Example Queries
+
+**Should Hit Cache (similar meaning):**
+- "How many vacation days do I get?" ↔ "What's the PTO allowance?"
+- "When is payday?" ↔ "What day do I get paid?"
+- "What health insurance plans are available?" ↔ "Tell me about medical coverage options"
+- "Can I work from home?" ↔ "What's the remote work policy?"
+- "How do I submit an expense report?" ↔ "Where do I file my reimbursement?"
+- "What is the maternity leave policy?" ↔ "How long is paid maternity leave?"
+
+**Should Miss Cache (different intent):**
+- "How many vacation days do I get?" ✗ "How many sick days do I get?"
+- "When is payday?" ✗ "When are annual raises decided?"
+- "What's the remote work policy?" ✗ "What's the maternity leave policy?"
+- "How do I submit an expense report?" ✗ "What is the meal allowance for travel?"
+- "What health insurance plans are available?" ✗ "When is open enrollment?"
+
+## FAQ Categories
+
+| Category | Topics | Approx. Pairs |
+|----------|--------|---------------|
+| Vacation / PTO | Days off, carryover, requesting time off | 4 |
+| Benefits | Health insurance, dental, enrollment, dependents | 4 |
+| Salary / Payroll | Payday, pay stubs, direct deposit, raises | 4 |
+| Remote Work | WFH policy, full-time remote, home office stipend | 3 |
+| Sick Leave / Family Leave | Sick days, maternity, paternity | 3 |
+| Expenses / Travel | Expense reports, travel reimbursement, meal allowance | 3 |
+| Onboarding | First day, email setup, employee handbook | 3 |
+| General | HR contact, company holidays | 2 |
