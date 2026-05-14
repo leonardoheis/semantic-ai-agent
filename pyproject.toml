@@ -41,6 +41,9 @@ dependencies = [
     "pydantic>=2.11.10",
     "scipy>=1.15.3",
     "tqdm>=4.67.3",
+    "torch>=2.10.0",
+    "torchvision>=0.25.0",
+    "torchaudio>=2.10.0",
 ]
 
 [dependency-groups]
