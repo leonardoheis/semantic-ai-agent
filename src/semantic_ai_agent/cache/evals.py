@@ -15,10 +15,7 @@ import pandas as pd
 
 from .wrapper import CacheResults
 
-try:
-    import tiktoken
-except ImportError:
-    tiktoken = None
+import tiktoken
 
 
 def count_tokens(text: str, model: str = "gpt-4o-mini") -> int:
@@ -32,28 +29,21 @@ def count_tokens(text: str, model: str = "gpt-4o-mini") -> int:
     Returns:
         Number of tokens
     """
-    if tiktoken is None:
-        return int(len(text.split()) * 1.3)
+    model_encodings = {
+        "gpt-4o": "o200k_base",
+        "gpt-4o-mini": "o200k_base",
+        "gpt-4": "cl100k_base",
+        "gpt-3.5-turbo": "cl100k_base",
+    }
 
-    try:
-        model_encodings = {
-            "gpt-4o": "o200k_base",
-            "gpt-4o-mini": "o200k_base",
-            "gpt-4": "cl100k_base",
-            "gpt-3.5-turbo": "cl100k_base",
-        }
+    encoding_name = "o200k_base"
+    for model_prefix, enc in model_encodings.items():
+        if model_prefix in model.lower():
+            encoding_name = enc
+            break
 
-        encoding_name = "o200k_base"
-        for model_prefix, enc in model_encodings.items():
-            if model_prefix in model.lower():
-                encoding_name = enc
-                break
-
-        encoding = tiktoken.get_encoding(encoding_name)
-        return len(encoding.encode(text))
-
-    except Exception:
-        return int(len(text.split()) * 1.3)
+    encoding = tiktoken.get_encoding(encoding_name)
+    return len(encoding.encode(text))
 
 
 def get_model_cost(provider: str, model: str) -> Dict[str, float]:
