@@ -1,7 +1,7 @@
 ---
 description: HR Policy FAQ semantic cache design specification
 globs: src/semantic_ai_agent/cache/**,notebooks/*.ipynb
-alwaysApply: false
+alwaysApply: True
 ---
 
 # HR Policy FAQ Semantic Cache
