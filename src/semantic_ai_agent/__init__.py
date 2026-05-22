@@ -1,23 +1,5 @@
-"""semantic_ai_agent — Redis Semantic Caching sandbox."""
+from .injections import configure_container
 
-from semantic_ai_agent.cache import (
-    config,
-    load_openai_key,
-    SemanticCacheWrapper,
-    CacheResult,
-    CacheResults,
-    try_connect_to_redis,
-    CacheEvaluator,
-    PerfEval,
-)
+configure_container()
 
-__all__ = [
-    "config",
-    "load_openai_key",
-    "SemanticCacheWrapper",
-    "CacheResult",
-    "CacheResults",
-    "try_connect_to_redis",
-    "CacheEvaluator",
-    "PerfEval",
-]
+__version__ = "0.1.0"

@@ -1,0 +1,231 @@
+---
+description: API scaffolding conventions for the FastAPI chatbot
+globs: src/semantic_ai_agent/api/**,src/semantic_ai_agent/services/**,src/semantic_ai_agent/domain/**,src/semantic_ai_agent/injections/**,tests/**
+alwaysApply: false
+---
+
+# API Scaffolding Conventions
+
+## Directory layout
+
+```
+src/semantic_ai_agent/
+  api/                    # API layer (routes, schemas, error handlers)
+    error_handlers/       # Exception-to-HTTP-response mappings
+      __init__.py          # EXCEPTION_HANDLERS dict
+      chat.py              # Handler functions for chat exceptions
+    routes/               # Thin route functions
+      __init__.py          # ROUTERS list
+      chat.py              # POST /chat
+      cache.py             # Cache management endpoints
+      health.py            # GET /health
+    app.py                # App factory + lifespan
+    dependencies.py       # Annotated DI type aliases
+    schema.py             # Pydantic v2 request/response DTOs
+  domain/                 # Pure Pydantic v2 domain models (no framework deps)
+    base.py               # DomainBase with shared model_config
+    chat_message.py
+    cache_entry.py
+  services/               # Business logic (one subpackage per domain)
+    <svc>/
+      __init__.py
+      exceptions.py       # @dataclass exception classes
+      service.py           # Service class
+    helper.py              # Shared service helpers
+  injections/             # DI containers
+    production.py         # DeclarativeContainer for production
+    test.py               # TestContainer with mock overrides
+  utils/                  # Shared utilities
+  settings.py             # Pydantic BaseSettings (env-based config)
+tests/                    # Mirrors api/ and services/ structure
+  conftest.py             # Fixtures: container, client
+  api/
+    test_chat.py
+    test_cache.py
+    test_health.py
+  services/
+    test_chat_service.py
+```
+
+## Key libraries
+
+- `fastapi` — API framework
+- `pydantic` v2 — models and validation
+- `pydantic-settings` — env-based configuration via `BaseSettings`
+- `dependency-injector` — IoC container, wiring, and DI
+- `uvicorn` — ASGI server
+
+## App factory (`api/app.py`)
+
+The app factory is clean and declarative. It loops through `ROUTERS` and `EXCEPTION_HANDLERS` — never register routers or handlers individually.
+
+```python
+from fastapi import FastAPI
+from .error_handlers import EXCEPTION_HANDLERS
+from .routes import ROUTERS
+
+def create_app() -> FastAPI:
+    app = FastAPI(title="...", lifespan=lifespan)
+
+    for router in ROUTERS:
+        app.include_router(router)
+
+    for exception, exception_handler in EXCEPTION_HANDLERS.items():
+        app.add_exception_handler(exception, exception_handler)
+
+    return app
+```
+
+The lifespan creates the DI `Container` and stores it on `app.state`.
+
+## Dependency injection pattern
+
+Use `dependency-injector` with three layers:
+
+### 1. Container (`injections/production.py`)
+
+`DeclarativeContainer` with `providers.Singleton` for each service. Use `WiringConfiguration` to declare which route modules get injected. Access settings via `config.provided.<field>`.
+
+```python
+class Container(containers.DeclarativeContainer):
+    wiring_config = containers.WiringConfiguration(
+        modules=["semantic_ai_agent.api.routes.chat", ...]
+    )
+    config = providers.Singleton(Settings)
+    cache = providers.Singleton(SemanticCacheWrapper, name=config.provided.cache_name, ...)
+    chat_service = providers.Singleton(ChatService, cache=cache, llm=llm, ...)
+```
+
+### 2. Type aliases (`api/dependencies.py`)
+
+Define `Annotated` type aliases pairing the service type with `Depends(Provide["provider_name"])`. Each dependency gets its own named alias.
+
+```python
+ChatServiceDependency = Annotated[ChatService, Depends(Provide["chat_service"])]
+SettingsDependency = Annotated[Settings, Depends(Provide["config"])]
+```
+
+### 3. Routes
+
+Use the `@inject` decorator on every route that needs injected dependencies. Use the typed dependency alias as the parameter type.
+
+```python
+@router.post("/chat", response_model=ChatResponse)
+@inject
+def chat(body: ChatRequest, svc: ChatServiceDependency) -> ChatResponse:
+    result = svc.ask(message=body.message, session_id=body.session_id)
+    return ChatResponse(**result)
+```
+
+## Route conventions
+
+- Routes are thin — validate input, delegate to a service, return response.
+- Use the RORO pattern (Receive an Object, Return an Object).
+- `ROUTERS` list in `api/routes/__init__.py`, looped in `app.py`.
+- Use `@inject` decorator on every route that needs injected dependencies.
+- When adding a new route file, add its router to the `ROUTERS` list and add its module path to the container's `WiringConfiguration.modules`.
+
+```python
+# api/routes/__init__.py
+ROUTERS = [health_router, chat_router, cache_router]
+__all__ = ["ROUTERS"]
+```
+
+## Error handling
+
+Errors follow a three-layer pattern:
+
+### 1. Exceptions in services (`services/<svc>/exceptions.py`)
+
+Exception classes are `@dataclass` and live inside the service that raises them. They carry structured data, not HTTP details.
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class CacheConnectionError(Exception):
+    detail: str = "Cannot connect to Redis cache"
+```
+
+### 2. Handler functions (`api/error_handlers/<handler>.py`)
+
+Handler functions translate service exceptions into HTTP responses. They receive `(Request, Exception)` and return `JSONResponse`.
+
+```python
+async def cache_connection_handler(request: Request, exc: Exception) -> JSONResponse:
+    return JSONResponse(status_code=503, content={"detail": exc.detail})
+```
+
+### 3. Registry (`api/error_handlers/__init__.py`)
+
+`EXCEPTION_HANDLERS` dict maps exception types to handler functions. This is the single source of truth for all error mappings.
+
+```python
+ExceptionHandler = Callable[[Request, Exception], Response]
+
+EXCEPTION_HANDLERS: dict[type[Exception], ExceptionHandler] = {
+    CacheConnectionError: cache_connection_handler,
+    LLMError: llm_error_handler,
+}
+__all__ = ["EXCEPTION_HANDLERS"]
+```
+
+When adding a new exception: (1) create it as `@dataclass` in the service's `exceptions.py`, (2) add a handler function in `api/error_handlers/`, (3) register it in the `EXCEPTION_HANDLERS` dict.
+
+## Schema conventions
+
+- API request/response DTOs in `api/schema.py` — these are API-facing shapes.
+- Domain models in `domain/` — pure Pydantic, no framework dependencies.
+- Domain models inherit from `DomainBase` with `model_config = ConfigDict(from_attributes=True, frozen=True)`.
+- Keep domain models and API schemas separate even if they look similar.
+
+## Settings (`settings.py`)
+
+Use Pydantic `BaseSettings` for all configuration. Fields are loaded from `.env` and environment variables.
+
+```python
+class Settings(BaseSettings):
+    redis_url: str = "redis://localhost:6379"
+    openai_api_key: str = ""
+    cache_name: str = "semantic-cache"
+    model_config = {"env_file": ".env", "extra": "ignore"}
+```
+
+## Testing
+
+### Container override pattern
+
+`TestContainer` in `injections/test.py` mirrors the production container but provides mock implementations. Tests wire the container in a fixture and unwire after.
+
+```python
+# conftest.py
+@pytest.fixture()
+def container():
+    c = TestContainer()
+    c.wire()
+    yield c
+    c.unwire()
+
+@pytest.fixture()
+def client(container):
+    app = create_app()
+    return TestClient(app)
+```
+
+- Tests should never require Redis or OpenAI — always use mocked providers.
+- To access a service instance in a test, use `container.chat_service()`.
+- When adding a new service to the container, add its mock to `TestContainer` as well.
+
+## Adding a new feature checklist
+
+When adding a new service/endpoint, follow these steps in order:
+
+1. **Service**: create `services/<name>/service.py` with business logic
+2. **Exceptions**: create `services/<name>/exceptions.py` with `@dataclass` exceptions
+3. **Schema**: add request/response models to `api/schema.py`
+4. **Route**: create `api/routes/<name>.py` with `@inject` + typed dependencies
+5. **Dependencies**: add `Annotated` type alias to `api/dependencies.py` if new provider needed
+6. **Container**: add provider to `injections/production.py`, add module to `WiringConfiguration`
+7. **Error handlers**: add handler function + register in `EXCEPTION_HANDLERS`
+8. **ROUTERS**: add new router to `ROUTERS` list in `api/routes/__init__.py`
+9. **Tests**: add test file in `tests/api/` and `tests/services/`, add mock to `TestContainer`

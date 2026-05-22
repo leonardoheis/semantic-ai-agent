@@ -79,13 +79,21 @@ Edit `.env` and set your OpenAI API key:
 | `CACHE_DISTANCE_THRESHOLD` | `0.3` | Cosine distance threshold for cache hits |
 | `CACHE_TTL_SECONDS` | `3600` | Time-to-live for cached entries (seconds) |
 
-### 5. Launch JupyterLab
+### 5. Launch the API server
+
+```bash
+uv run poe serve
+```
+
+The FastAPI server starts at http://localhost:8000. Interactive docs are available at http://localhost:8000/docs.
+
+### 6. Launch JupyterLab
 
 ```bash
 uv run jupyter lab
 ```
 
-### 6. Run the notebook
+### 7. Run the notebook
 
 Open `notebooks/01-experiment.ipynb` and run cells in order. The notebook walks through the full semantic caching pipeline:
 
@@ -99,7 +107,7 @@ Open `notebooks/01-experiment.ipynb` and run cells in order. The notebook walks 
 8. **Threshold tuning** — sweeps distance thresholds and plots precision/recall/F1 curves
 9. **Performance evaluation** — measures hit rate, latency, and cost savings against spec goals
 
-### 7. GPU support (optional)
+### 8. GPU support (optional)
 
 If you have an NVIDIA GPU with CUDA 12.8 support, PyTorch CUDA wheels are automatically resolved via the `[tool.uv.sources]` configuration in `pyproject.toml`. Verify GPU availability in the notebook:
 
@@ -108,6 +116,18 @@ import torch
 print(torch.cuda.is_available())  # True if GPU is detected
 print(torch.cuda.get_device_name(0))
 ```
+
+## API endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/chat` | Send a question, get a cached or LLM-generated answer |
+| `GET` | `/health` | Check Redis connectivity |
+| `POST` | `/cache/hydrate` | Load FAQ data into the semantic cache |
+| `DELETE` | `/cache` | Clear all cache entries |
+| `GET` | `/cache/stats` | View cache index metadata |
+
+The `/chat` endpoint supports multi-turn conversation via `session_id`. Omit it to start a new session, or pass a previous `session_id` to continue the conversation.
 
 ## Project structure
 
@@ -119,15 +139,27 @@ notebooks/
   00-semantic-cache-demo.ipynb      # Introductory demo notebook
   01-experiment.ipynb               # Full semantic caching experiment
 src/semantic_ai_agent/
+  api/                              # FastAPI chatbot API
+    error_handlers/                 # Custom exception classes and handlers
+    routes/                         # Route definitions (chat, cache, health)
+    app.py                          # App factory and lifespan
+    dependencies.py                 # DI providers
+    schema.py                       # Pydantic v2 request/response schemas
+  domain/                           # Pure Pydantic v2 domain models
+  services/
+    chat/                           # ChatService (cache + LLM orchestration)
+    helper.py                       # Shared service helpers
+  injections/                       # DI containers (production + test mocks)
   cache/
     config.py                       # Environment config and API key loading
     wrapper.py                      # SemanticCacheWrapper (check, store, hydrate)
     evals.py                        # CacheEvaluator and PerfEval metrics
-.cursor/rules/
-  hr-cache-spec.mdc                 # Cache design specification
-  notebook-conventions.mdc          # Notebook coding conventions
-  data-conventions.mdc              # Data directory rules
-  quality-workflow.mdc              # Quality check workflow
+  frontend/                         # Placeholder for future UI
+  utils/                            # Shared utilities
+  settings.py                       # Pydantic Settings (env-based configuration)
+tests/
+  api/                              # API route tests
+  services/                         # Service unit tests
 ```
 
 ## Cache design summary
@@ -151,7 +183,9 @@ uv run poe check       # lint + typecheck + nbtest (full suite)
 uv run poe lint        # ruff check + format verification
 uv run poe fmt         # ruff auto-format
 uv run poe typecheck   # mypy on src/ and notebooks/
+uv run poe test        # pytest tests/ (API and service tests)
 uv run poe nbtest      # pytest --nbmake (executes notebooks end-to-end)
+uv run poe serve       # start the FastAPI server on port 8000
 ```
 
 Always run `uv run poe check` after making changes.
@@ -160,6 +194,7 @@ Always run `uv run poe check` after making changes.
 
 | Component | Library |
 |-----------|---------|
+| API framework | FastAPI, Pydantic v2, uvicorn |
 | Vector store and caching | Redis Stack, RedisVL |
 | Semantic embeddings | sentence-transformers (`all-MiniLM-L6-v2`) |
 | LLM | OpenAI GPT via LangChain |
