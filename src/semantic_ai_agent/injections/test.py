@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 from dependency_injector import containers, providers
 
 from semantic_ai_agent.cache.wrapper import CacheResult, CacheResults
+from semantic_ai_agent.services.cache.service import CacheService
 from semantic_ai_agent.services.chat.service import ChatService
 from semantic_ai_agent.settings import Settings
 
@@ -74,17 +75,20 @@ class TestContainer(containers.DeclarativeContainer):
 
     config = providers.Singleton(
         Settings,
-        redis_url="redis://localhost:6379",
-        openai_api_key="test-key",
-        cache_name="test-cache",
-        distance_threshold=0.3,
-        ttl_seconds=60,
-        openai_model="gpt-test",
+        OPENAI_API_KEY="test-key",
+        CACHE_NAME="test-cache",
+        CACHE_DISTANCE_THRESHOLD=0.3,
+        CACHE_TTL_SECONDS=60,
+        OPENAI_MODEL="gpt-test",
+        REDIS="localhost",
+        REDIS_PORT=6379,
     )
 
     cache = providers.Singleton(MockCacheWrapper)
 
     llm = providers.Singleton(MockLLM)
+
+    cache_service = providers.Singleton(CacheService, cache=cache)
 
     chat_service = providers.Singleton(
         ChatService,

@@ -14,7 +14,7 @@ router = APIRouter(tags=["health"])
 @inject
 def health_check(settings: SettingsDependency) -> HealthResponse:
     try:
-        client = redis.from_url(settings.redis_url)
+        client = redis.from_url(settings.REDIS_HOST)
         client.ping()
         is_connected = True
     except Exception:

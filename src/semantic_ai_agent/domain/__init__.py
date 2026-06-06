@@ -2,6 +2,14 @@
 
 from .base import DomainBase
 from .cache_entry import CacheEntry
+from .cache_stats import CacheStats
 from .chat_message import ChatMessage
+from .faq_data import FaqEntry
 
-__all__ = ["CacheEntry", "ChatMessage", "DomainBase"]
+__all__ = [
+    "CacheEntry",
+    "CacheStats",
+    "ChatMessage",
+    "DomainBase",
+    "FaqEntry",
+]

@@ -8,11 +8,10 @@ from .app import create_app
 
 
 def run_api() -> None:
-    settings = Settings()
     uvicorn.run(
         "semantic_ai_agent.api.app:app",
-        host=settings.host,
-        port=settings.api_port,
+        host=Settings.HOST,
+        port=Settings.API_PORT,
         reload=True,
     )
 

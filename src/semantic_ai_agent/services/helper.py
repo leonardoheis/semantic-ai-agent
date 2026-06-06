@@ -2,13 +2,16 @@
 
 import json
 from pathlib import Path
-from typing import Any
+
+from semantic_ai_agent.domain.faq_data import FaqEntry
+
+_DEFAULT_FAQ_PATH = Path("data/raw/faq_data.json")
 
 
-def load_faq_json(faq_path: str | None = None) -> list[dict[str, Any]]:
-    """Load FAQ data from a JSON file."""
-    path = Path(faq_path) if faq_path else Path("data/raw/faq_data.json")
-    if not path.exists():
-        raise FileNotFoundError(f"FAQ file not found: {path}")
-    with open(path) as f:
-        return json.load(f)
+def load_faq_json(faq_path: Path = _DEFAULT_FAQ_PATH) -> list[FaqEntry]:
+    """Load FAQ data from a JSON file and return typed domain objects."""
+    if not faq_path.exists():
+        raise FileNotFoundError(f"FAQ file not found: {faq_path}")
+    with open(faq_path) as f:
+        raw: list[dict[str, object]] = json.load(f)
+    return [FaqEntry.model_validate(item) for item in raw]

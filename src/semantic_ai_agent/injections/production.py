@@ -4,6 +4,7 @@ from dependency_injector import containers, providers
 from langchain_openai import ChatOpenAI
 
 from semantic_ai_agent.cache.wrapper import SemanticCacheWrapper
+from semantic_ai_agent.services.cache.service import CacheService
 from semantic_ai_agent.services.chat.service import ChatService
 from semantic_ai_agent.settings import Settings
 
@@ -21,22 +22,24 @@ class Container(containers.DeclarativeContainer):
 
     cache = providers.Singleton(
         SemanticCacheWrapper,
-        name=config.provided.cache_name,
-        distance_threshold=config.provided.distance_threshold,
-        ttl=config.provided.ttl_seconds,
-        redis_url=config.provided.redis_url,
+        name=config.provided.CACHE_NAME,
+        distance_threshold=config.provided.CACHE_DISTANCE_THRESHOLD,
+        ttl=config.provided.CACHE_TTL_SECONDS,
+        redis_url=config.provided.REDIS_HOST,
     )
 
     llm = providers.Singleton(
         ChatOpenAI,
-        model=config.provided.openai_model,
+        model=config.provided.OPENAI_MODEL,
         temperature=0,
-        api_key=config.provided.openai_api_key,
+        api_key=config.provided.OPENAI_API_KEY,
     )
+
+    cache_service = providers.Singleton(CacheService, cache=cache)
 
     chat_service = providers.Singleton(
         ChatService,
         cache=cache,
         llm=llm,
-        system_prompt=config.provided.hr_system_prompt,
+        system_prompt=config.provided.HR_SYSTEM_PROMPT,
     )

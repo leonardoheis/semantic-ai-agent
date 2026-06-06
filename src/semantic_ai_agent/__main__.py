@@ -8,5 +8,8 @@ def main() -> None:
 
     api_process.start()
 
+    api_process.join()
+
+
 if __name__ == "__main__":
     main()
