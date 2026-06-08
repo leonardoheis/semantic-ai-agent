@@ -5,18 +5,18 @@ def test_chat_returns_new_session(client):
     response = client.post("/chat", json={"message": "How many vacation days do I get?"})
     assert response.status_code == 200
     data = response.json()
-    assert "session_id" in data
+    assert "sessionId" in data
     assert "answer" in data
     assert data["source"] in ("cache_hit", "llm_generated")
-    assert data["latency_ms"] >= 0
+    assert data["latencyMs"] >= 0
 
 
 def test_chat_with_session_id(client):
     r1 = client.post("/chat", json={"message": "Hello"})
-    sid = r1.json()["session_id"]
-    r2 = client.post("/chat", json={"session_id": sid, "message": "Follow-up question"})
+    sid = r1.json()["sessionId"]
+    r2 = client.post("/chat", json={"sessionId": sid, "message": "Follow-up question"})
     assert r2.status_code == 200
-    assert r2.json()["session_id"] == sid
+    assert r2.json()["sessionId"] == sid
 
 
 def test_chat_cache_hit(client, container):

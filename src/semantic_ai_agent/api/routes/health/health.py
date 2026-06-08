@@ -4,7 +4,7 @@ from dependency_injector.wiring import inject
 from fastapi import APIRouter
 
 from semantic_ai_agent.api.dependencies import SettingsDependency
-from semantic_ai_agent.api.schema import HealthResponse
+from .schema import HealthResponse
 from semantic_ai_agent.utils import ping_redis
 
 router = APIRouter(tags=["health"])

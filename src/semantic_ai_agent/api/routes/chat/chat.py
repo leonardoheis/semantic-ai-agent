@@ -6,7 +6,7 @@ from dependency_injector.wiring import inject
 from fastapi import APIRouter, Body
 
 from semantic_ai_agent.api.dependencies import ChatServiceDependency
-from semantic_ai_agent.api.schema import ChatRequest, ChatResponse
+from .schema import ChatRequest, ChatResponse
 from semantic_ai_agent.services.chat.exceptions import CacheConnectionError, LLMError
 
 from .examples import CHAT_EXAMPLES

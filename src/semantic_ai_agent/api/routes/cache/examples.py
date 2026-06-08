@@ -2,7 +2,7 @@
 
 from fastapi.openapi.models import Example
 
-from semantic_ai_agent.api.schema import HydrateRequest
+from .schema import HydrateRequest
 
 EXAMPLES: dict[str, Example] = {
     "default_path": {

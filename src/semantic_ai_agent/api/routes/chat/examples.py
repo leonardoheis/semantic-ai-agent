@@ -2,7 +2,7 @@
 
 from fastapi.openapi.models import Example
 
-from semantic_ai_agent.api.schema import ChatRequest
+from .schema import ChatRequest
 
 CHAT_EXAMPLES: dict[str, Example] = {
     "new_session": {

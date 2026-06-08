@@ -9,11 +9,7 @@ from semantic_ai_agent.api.dependencies import (
     CacheAdminServiceDependency,
     CacheHydrationServiceDependency,
 )
-from semantic_ai_agent.api.schema import (
-    CacheStatsResponse,
-    HydrateRequest,
-    HydrateResponse,
-)
+from .schema import CacheStatsResponse, HydrateRequest, HydrateResponse
 from semantic_ai_agent.services.cache.exceptions import FaqFileNotFoundError
 from .examples import EXAMPLES
 
