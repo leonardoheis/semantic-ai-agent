@@ -2,14 +2,19 @@
 
 from .base import DomainBase
 from .cache_entry import CacheEntry
+from .cache_result import CacheResult, CacheResults
 from .cache_stats import CacheStats
 from .chat_message import ChatMessage
 from .faq_data import FaqEntry
+from .hydrate_result import HydrateResult
 
 __all__ = [
     "CacheEntry",
+    "CacheResult",
+    "CacheResults",
     "CacheStats",
     "ChatMessage",
     "DomainBase",
     "FaqEntry",
+    "HydrateResult",
 ]

@@ -2,7 +2,12 @@
 
 from typing import Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
+from pydantic.alias_generators import to_camel
+
+
+class BaseSchema(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, arbitrary_types_allowed=True)
 
 
 class ChatRequest(BaseModel):
@@ -11,6 +16,10 @@ class ChatRequest(BaseModel):
         description="Session ID for multi-turn conversation. Null to start a new session.",
     )
     message: str = Field(..., min_length=1, description="The user's question.")
+
+    @classmethod
+    def create_example(cls, message: str = "What is the remote work policy?") -> "ChatRequest":
+        return cls(message=message)
 
 
 class ChatResponse(BaseModel):
@@ -31,6 +40,10 @@ class HydrateRequest(BaseModel):
         default=None,
         description="Path to FAQ JSON file. Defaults to data/raw/faq_data.json.",
     )
+
+    @classmethod
+    def create_example(cls, faq_path: Optional[str] = None) -> "HydrateRequest":
+        return cls(faq_path=faq_path)
 
 
 class HydrateResponse(BaseModel):

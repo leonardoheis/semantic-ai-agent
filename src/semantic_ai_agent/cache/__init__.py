@@ -1,21 +1,25 @@
 """
 Cache helper utilities for Redis Semantic Caching project.
 
-This module provides helper classes and functions for building
-and evaluating semantic caching systems with Redis.
+SemanticCacheWrapper has been replaced by focused services:
+  - CacheQueryService     (services/cache/query_service.py)
+  - CacheHydrationService (services/cache/hydration_service.py)
+  - CacheAdminService     (services/cache/admin_service.py)
+
+CacheResult and CacheResults are domain models (domain/cache_result.py).
 """
 
 from .config import config, load_openai_key
-from .wrapper import SemanticCacheWrapper, CacheResult, CacheResults, try_connect_to_redis
 from .evals import CacheEvaluator, PerfEval
+from semantic_ai_agent.domain.cache_result import CacheResult, CacheResults
+from semantic_ai_agent.utils import try_connect_to_redis
 
 __all__ = [
-    "config",
-    "load_openai_key",
-    "SemanticCacheWrapper",
+    "CacheEvaluator",
     "CacheResult",
     "CacheResults",
-    "try_connect_to_redis",
-    "CacheEvaluator",
     "PerfEval",
+    "config",
+    "load_openai_key",
+    "try_connect_to_redis",
 ]

@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from .wrapper import CacheResults
+from semantic_ai_agent.domain.cache_result import CacheResults
 
 import tiktoken
 

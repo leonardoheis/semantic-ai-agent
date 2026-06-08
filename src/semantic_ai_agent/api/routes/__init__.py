@@ -1,8 +1,8 @@
 """API route definitions."""
 
-from .cache import router as cache_router
-from .chat import router as chat_router
-from .health import router as health_router
+from .cache import cache_router
+from .chat import chat_router
+from .health import health_router
 
 ROUTERS = [health_router, chat_router, cache_router]
 

@@ -2,25 +2,24 @@
 
 import time
 import uuid
-from typing import Optional
+from typing import Any, Optional
 
-from langchain_openai import ChatOpenAI
+from pydantic import BaseModel, ConfigDict, Field
 
-from semantic_ai_agent.cache.wrapper import CacheResults, SemanticCacheWrapper
+from semantic_ai_agent.domain.cache_result import CacheResults
 from semantic_ai_agent.domain.chat_message import ChatMessage
 
 
-class ChatService:
-    def __init__(
-        self,
-        cache: SemanticCacheWrapper,
-        llm: ChatOpenAI,
-        system_prompt: str,
-    ):
-        self.cache = cache
-        self.llm = llm
-        self.system_prompt = system_prompt
-        self.sessions: dict[str, list[ChatMessage]] = {}
+class ChatService(BaseModel):
+    cache: Any = Field(..., description="The cache query service to use for lookups.")
+    llm: Any = Field(..., description="The LLM to use for generating responses.")
+    system_prompt: str = Field(
+        ..., description="The system prompt to use for generating responses."
+    )
+    sessions: dict[str, list[ChatMessage]] = Field(
+        default_factory=dict, description="The sessions to use for generating responses."
+    )
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def _ensure_session(self, session_id: Optional[str]) -> str:
         sid = session_id or str(uuid.uuid4())
