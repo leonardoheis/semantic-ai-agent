@@ -7,6 +7,7 @@ from .cache_stats import CacheStats
 from .chat_message import ChatMessage
 from .faq_data import FaqEntry
 from .hydrate_result import HydrateResult
+from .chat_result import ChatResult
 
 __all__ = [
     "CacheEntry",
@@ -17,4 +18,5 @@ __all__ = [
     "DomainBase",
     "FaqEntry",
     "HydrateResult",
+    "ChatResult",
 ]

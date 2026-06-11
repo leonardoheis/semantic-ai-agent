@@ -28,4 +28,4 @@ def chat(
         if "openai" in (getattr(type(e), "__module__", "") or "").lower():
             raise LLMError(detail=str(e))
         raise
-    return ChatResponse(**result)
+    return ChatResponse.model_validate(result)

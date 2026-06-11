@@ -86,3 +86,6 @@ class CacheQueryService(DomainBase):
     def has_reranker(self) -> bool:
         """Return True if a reranker is registered."""
         return self.reranker is not None
+
+    def check_cache(self, query: str) -> CacheResults:
+        return self.cache.check(query)

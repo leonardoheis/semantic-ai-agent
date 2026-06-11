@@ -6,8 +6,8 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from semantic_ai_agent.domain.cache_result import CacheResults
 from semantic_ai_agent.domain.chat_message import ChatMessage
+from semantic_ai_agent.domain.chat_result import ChatResult
 
 
 class ChatService(BaseModel):
@@ -28,7 +28,7 @@ class ChatService(BaseModel):
             self.sessions[sid] = []
         return sid
 
-    def ask(self, message: str, session_id: Optional[str] = None) -> dict:
+    def ask(self, message: str, session_id: Optional[str] = None) -> ChatResult:
         """Process a chat message: check cache, call LLM on miss, return result dict."""
         sid = self._ensure_session(session_id)
         start = time.perf_counter()
@@ -40,13 +40,13 @@ class ChatService(BaseModel):
             elapsed_ms = (time.perf_counter() - start) * 1000
             self._append(sid, "user", message)
             self._append(sid, "assistant", match.response)
-            return {
-                "session_id": sid,
-                "answer": match.response,
-                "source": "cache_hit",
-                "latency_ms": round(elapsed_ms, 2),
-                "distance": round(match.vector_distance, 6),
-            }
+            return ChatResult(
+                session_id=sid,
+                answer=match.response,
+                source="cache_hit",
+                latency_ms=round(elapsed_ms, 2),
+                distance=round(match.vector_distance, 6),
+            )
 
         answer = self._call_llm(sid, message)
         self.store.store(prompt=message, response=answer)
@@ -54,13 +54,13 @@ class ChatService(BaseModel):
 
         self._append(sid, "user", message)
         self._append(sid, "assistant", answer)
-        return {
-            "session_id": sid,
-            "answer": answer,
-            "source": "llm_generated",
-            "latency_ms": round(elapsed_ms, 2),
-            "distance": None,
-        }
+        return ChatResult(
+            session_id=sid,
+            answer=answer,
+            source="llm_generated",
+            latency_ms=round(elapsed_ms, 2),
+            distance=None,
+        )
 
     def _call_llm(self, session_id: str, message: str) -> str:
         history = self.sessions.get(session_id, [])
@@ -78,6 +78,3 @@ class ChatService(BaseModel):
 
     def get_history(self, session_id: str) -> list[ChatMessage]:
         return self.sessions.get(session_id, [])
-
-    def check_cache(self, query: str) -> CacheResults:
-        return self.cache.check(query)
