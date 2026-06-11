@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Body
 from semantic_ai_agent.api.dependencies import (
     CacheAdminServiceDependency,
     CacheHydrationServiceDependency,
+    CacheStatsServiceDependency,
 )
 from .schema import CacheStatsResponse, HydrateRequest, HydrateResponse
 from semantic_ai_agent.services.cache.exceptions import FaqFileNotFoundError
@@ -23,7 +24,7 @@ def hydrate_cache(
     svc: CacheHydrationServiceDependency,
 ) -> HydrateResponse:
     try:
-        result = svc.hydrate(body.faq_path)
+        result = svc.hydrate()
     except FaqFileNotFoundError as e:
         raise HTTPException(status_code=404, detail=e.detail)
     return HydrateResponse(entries_loaded=result.entries_loaded, categories=result.categories)
@@ -38,7 +39,7 @@ def clear_cache(svc: CacheAdminServiceDependency) -> dict[str, str]:
 
 @router.get("/stats", response_model=CacheStatsResponse)
 @inject
-def cache_stats(svc: CacheAdminServiceDependency) -> CacheStatsResponse:
+def cache_stats(svc: CacheStatsServiceDependency) -> CacheStatsResponse:
     s = svc.stats()
     return CacheStatsResponse(
         total_entries=s.total_entries,

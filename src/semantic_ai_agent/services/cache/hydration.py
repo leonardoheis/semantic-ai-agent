@@ -1,6 +1,5 @@
-"""Cache hydration service — populates the semantic cache from FAQ data."""
+"""Cache hydration — populates the semantic cache from FAQ data."""
 
-from pathlib import Path
 from typing import Iterable, Optional
 
 import pandas as pd
@@ -13,8 +12,6 @@ from semantic_ai_agent.services.cache.exceptions import CacheHydrationError, Faq
 from semantic_ai_agent.services.helper import load_faq_json
 from semantic_ai_agent.settings import Settings
 
-_DEFAULT_FAQ_PATH: Path = Settings.DEFAULT_FAQ_PATH
-
 
 class CacheHydrationService(DomainBase):
     """Responsible for populating the cache from FAQ data."""
@@ -23,19 +20,15 @@ class CacheHydrationService(DomainBase):
 
     cache: SemanticCache = Field(..., description="The shared semantic cache instance.")
 
-    def hydrate(self, faq_path: str | None = None) -> HydrateResult:
+    def hydrate(self) -> HydrateResult:
         """Load FAQ data from disk and populate the semantic cache."""
-        path = Path(faq_path) if faq_path else _DEFAULT_FAQ_PATH
-        if not path.exists():
-            raise FaqFileNotFoundError(detail=f"FAQ file not found: {path}")
         try:
-            entries = load_faq_json(path)
+            entries = load_faq_json(Settings.DEFAULT_FAQ_PATH)
             df = pd.DataFrame([e.model_dump() for e in entries])
             self._load_df(df, q_col="question", a_col="response")
-        except FaqFileNotFoundError:
-            raise
         except Exception as exc:
             raise CacheHydrationError(detail=f"Hydration failed: {exc}") from exc
+        
         categories = sorted(df["category"].unique().tolist()) if "category" in df.columns else []
         return HydrateResult(entries_loaded=len(df), categories=categories)
 

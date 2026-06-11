@@ -5,10 +5,12 @@ from typing import Annotated
 from dependency_injector.wiring import Provide
 from fastapi import Depends
 
-from semantic_ai_agent.services.cache.admin_service import CacheAdminService
-from semantic_ai_agent.services.cache.hydration_service import CacheHydrationService
-from semantic_ai_agent.services.cache.query_service import CacheQueryService
-from semantic_ai_agent.services.chat.service import ChatService
+from semantic_ai_agent.services.cache.admin import CacheAdminService
+from semantic_ai_agent.services.cache.hydration import CacheHydrationService
+from semantic_ai_agent.services.cache.query import CacheQueryService
+from semantic_ai_agent.services.cache.stats import CacheStatsService
+from semantic_ai_agent.services.cache.store import CacheStoreService
+from semantic_ai_agent.services.chat.chat import ChatService
 from semantic_ai_agent.settings import SettingsType
 
 CacheAdminServiceDependency = Annotated[
@@ -24,6 +26,16 @@ CacheHydrationServiceDependency = Annotated[
 CacheQueryServiceDependency = Annotated[
     CacheQueryService,
     Depends(Provide["cache_query_service"]),
+]
+
+CacheStatsServiceDependency = Annotated[
+    CacheStatsService,
+    Depends(Provide["cache_stats_service"]),
+]
+
+CacheStoreServiceDependency = Annotated[
+    CacheStoreService,
+    Depends(Provide["cache_store_service"]),
 ]
 
 ChatServiceDependency = Annotated[

@@ -1,16 +1,16 @@
 """Test dependency bindings — mocked services and LLM for testing without external services."""
 
+from pathlib import Path
 from typing import Any, Optional
 from unittest.mock import MagicMock
 
 from dependency_injector import containers, providers
 
-from pathlib import Path
-
 from semantic_ai_agent.domain.cache_result import CacheResult, CacheResults
+from semantic_ai_agent.domain.cache_stats import CacheStats
 from semantic_ai_agent.domain.hydrate_result import HydrateResult
 from semantic_ai_agent.services.cache.exceptions import FaqFileNotFoundError
-from semantic_ai_agent.services.chat.service import ChatService
+from semantic_ai_agent.services.chat.chat import ChatService
 from semantic_ai_agent.settings import SettingsType
 
 
@@ -41,9 +41,6 @@ class MockCacheQueryService:
             )
         return CacheResults(query=query, matches=[])
 
-    def store(self, prompt: str, response: str, **kwargs: Any) -> None:
-        self.entries[prompt] = response
-
     def check_many(self, queries: list[str], **kwargs: Any) -> list[CacheResults]:
         return [self.check(q) for q in queries]
 
@@ -55,6 +52,16 @@ class MockCacheQueryService:
 
     def has_reranker(self) -> bool:
         return False
+
+
+class MockCacheStoreService:
+    """In-memory mock of CacheStoreService for testing."""
+
+    def __init__(self, query_service: MockCacheQueryService) -> None:
+        self._query_service = query_service
+
+    def store(self, prompt: str, response: str, **kwargs: Any) -> None:
+        self._query_service.entries[prompt] = response
 
 
 class MockCacheHydrationService:
@@ -88,9 +95,14 @@ class MockCacheAdminService:
     def clear(self) -> None:
         self._query_service.entries.clear()
 
-    def stats(self) -> Any:
-        from semantic_ai_agent.domain.cache_stats import CacheStats
 
+class MockCacheStatsService:
+    """In-memory mock of CacheStatsService for testing."""
+
+    def __init__(self, query_service: MockCacheQueryService) -> None:
+        self._query_service = query_service
+
+    def stats(self) -> CacheStats:
         return CacheStats(
             total_entries=len(self._query_service.entries),
             index_name="test-cache",
@@ -120,8 +132,10 @@ _test_settings = SettingsType(
 )
 
 _mock_query = MockCacheQueryService()
+_mock_store = MockCacheStoreService(query_service=_mock_query)
 _mock_hydration = MockCacheHydrationService()
 _mock_admin = MockCacheAdminService(query_service=_mock_query)
+_mock_stats = MockCacheStatsService(query_service=_mock_query)
 
 
 class TestContainer(containers.DeclarativeContainer):
@@ -138,14 +152,17 @@ class TestContainer(containers.DeclarativeContainer):
     config: providers.Provider[SettingsType] = providers.Object(_test_settings)
 
     cache_query_service = providers.Object(_mock_query)
+    cache_store_service = providers.Object(_mock_store)
     cache_hydration_service = providers.Object(_mock_hydration)
     cache_admin_service = providers.Object(_mock_admin)
+    cache_stats_service = providers.Object(_mock_stats)
 
     llm = providers.Singleton(MockLLM)
 
     chat_service = providers.Factory(
         ChatService,
         cache=cache_query_service,
+        store=cache_store_service,
         llm=llm,
         system_prompt="You are a test HR assistant.",
     )
@@ -153,9 +170,11 @@ class TestContainer(containers.DeclarativeContainer):
 
 def create_mock_chat_service() -> ChatService:
     query_svc = MockCacheQueryService()
+    store_svc = MockCacheStoreService(query_service=query_svc)
     llm = MockLLM()
     return ChatService(
         cache=query_svc,  # type: ignore[arg-type]
+        store=store_svc,  # type: ignore[arg-type]
         llm=llm,  # type: ignore[arg-type]
         system_prompt="You are a test HR assistant.",
     )

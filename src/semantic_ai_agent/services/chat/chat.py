@@ -1,4 +1,4 @@
-"""Chat service — orchestrates semantic cache lookup, LLM calls, and session history."""
+"""Chat — orchestrates semantic cache lookup, LLM calls, and session history."""
 
 import time
 import uuid
@@ -11,13 +11,14 @@ from semantic_ai_agent.domain.chat_message import ChatMessage
 
 
 class ChatService(BaseModel):
-    cache: Any = Field(..., description="The cache query service to use for lookups.")
+    cache: Any = Field(..., description="CacheQueryService — used for lookups.")
+    store: Any = Field(..., description="CacheStoreService — used for writing new entries.")
     llm: Any = Field(..., description="The LLM to use for generating responses.")
     system_prompt: str = Field(
         ..., description="The system prompt to use for generating responses."
     )
     sessions: dict[str, list[ChatMessage]] = Field(
-        default_factory=dict, description="The sessions to use for generating responses."
+        default_factory=dict, description="In-memory conversation history keyed by session ID."
     )
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -48,7 +49,7 @@ class ChatService(BaseModel):
             }
 
         answer = self._call_llm(sid, message)
-        self.cache.store(prompt=message, response=answer)
+        self.store.store(prompt=message, response=answer)
         elapsed_ms = (time.perf_counter() - start) * 1000
 
         self._append(sid, "user", message)

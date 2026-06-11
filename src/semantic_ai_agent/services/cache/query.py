@@ -1,4 +1,4 @@
-"""Cache query service — reads and writes entries to the semantic cache."""
+"""Cache query — reads entries from the semantic cache."""
 
 from typing import Callable, Optional
 
@@ -8,13 +8,13 @@ from tqdm.auto import tqdm
 
 from semantic_ai_agent.domain.base import DomainBase
 from semantic_ai_agent.domain.cache_result import CacheResult, CacheResults
-from semantic_ai_agent.services.cache.exceptions import CacheQueryError, CacheStoreError
+from semantic_ai_agent.services.cache.exceptions import CacheQueryError
 
 RerankerFn = Callable[[str, list[dict]], list[dict]]
 
 
 class CacheQueryService(DomainBase):
-    """Responsible for cache lookups and storing new answers."""
+    """Responsible for cache lookups only."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True, frozen=False)
 
@@ -75,17 +75,8 @@ class CacheQueryService(DomainBase):
             for q in tqdm(queries, disable=not show_progress)
         ]
 
-    def store(self, prompt: str, response: str, **kwargs: object) -> None:
-        """Store a prompt-response pair in the cache."""
-        try:
-            self.cache.store(prompt=prompt, response=response, **kwargs)
-        except Exception as exc:
-            raise CacheStoreError(detail=f"Failed to store entry: {exc}") from exc
-
     def register_reranker(self, reranker: RerankerFn) -> None:
         """Register an optional reranking function."""
-        if not callable(reranker):
-            raise TypeError("Reranker must be a callable")
         self.reranker = reranker
 
     def clear_reranker(self) -> None:

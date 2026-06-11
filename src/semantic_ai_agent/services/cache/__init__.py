@@ -1,6 +1,6 @@
 """Cache service package."""
 
-from .admin_service import CacheAdminService
+from .admin import CacheAdminService
 from .exceptions import (
     CacheConnectionError,
     CacheHydrationError,
@@ -9,8 +9,10 @@ from .exceptions import (
     CacheStoreError,
     FaqFileNotFoundError,
 )
-from .hydration_service import CacheHydrationService
-from .query_service import CacheQueryService
+from .hydration import CacheHydrationService
+from .query import CacheQueryService
+from .stats import CacheStatsService
+from .store import CacheStoreService
 
 __all__ = [
     "CacheAdminService",
@@ -20,6 +22,8 @@ __all__ = [
     "CacheQueryError",
     "CacheQueryService",
     "CacheStatsError",
+    "CacheStatsService",
     "CacheStoreError",
+    "CacheStoreService",
     "FaqFileNotFoundError",
 ]

@@ -63,5 +63,4 @@ class _Settings(BaseSettings):
         return self.REDIS_URL.format(port=self.REDIS_PORT)
 
 
-SettingsType = _Settings
-Settings: _Settings = _Settings()
+Settings = _Settings()

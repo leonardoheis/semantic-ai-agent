@@ -21,7 +21,7 @@ def test_chat_with_session_id(client):
 
 def test_chat_cache_hit(client, container):
     svc = container.chat_service()
-    svc.cache.store(prompt="What is PTO?", response="15 days per year.")
+    svc.store.store(prompt="What is PTO?", response="15 days per year.")
     response = client.post("/chat", json={"message": "What is PTO?"})
     data = response.json()
     assert data["source"] == "cache_hit"

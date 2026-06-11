@@ -13,7 +13,7 @@ def test_ask_returns_llm_on_miss():
 
 def test_ask_returns_cache_hit_after_store():
     svc = create_mock_chat_service()
-    svc.cache.store(prompt="What is PTO?", response="15 days.")
+    svc.store.store(prompt="What is PTO?", response="15 days.")
     result = svc.ask("What is PTO?")
     assert result["source"] == "cache_hit"
     assert result["answer"] == "15 days."

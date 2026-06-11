@@ -7,10 +7,12 @@ from redisvl.extensions.cache.embeddings import EmbeddingsCache
 from redisvl.extensions.cache.llm import SemanticCache
 from redisvl.utils.vectorize import HFTextVectorizer
 
-from semantic_ai_agent.services.cache.admin_service import CacheAdminService
-from semantic_ai_agent.services.cache.hydration_service import CacheHydrationService
-from semantic_ai_agent.services.cache.query_service import CacheQueryService
-from semantic_ai_agent.services.chat.service import ChatService
+from semantic_ai_agent.services.cache.admin import CacheAdminService
+from semantic_ai_agent.services.cache.hydration import CacheHydrationService
+from semantic_ai_agent.services.cache.query import CacheQueryService
+from semantic_ai_agent.services.cache.stats import CacheStatsService
+from semantic_ai_agent.services.cache.store import CacheStoreService
+from semantic_ai_agent.services.chat.chat import ChatService
 from semantic_ai_agent.settings import Settings, SettingsType
 
 
@@ -60,12 +62,15 @@ class Container(containers.DeclarativeContainer):
     # --- Services: Factories (stateless, new instance per injection) ---
 
     cache_query_service = providers.Factory(CacheQueryService, cache=semantic_cache)
+    cache_store_service = providers.Factory(CacheStoreService, cache=semantic_cache)
     cache_hydration_service = providers.Factory(CacheHydrationService, cache=semantic_cache)
     cache_admin_service = providers.Factory(CacheAdminService, cache=semantic_cache)
+    cache_stats_service = providers.Factory(CacheStatsService, cache=semantic_cache)
 
     chat_service = providers.Factory(
         ChatService,
         cache=cache_query_service,
+        store=cache_store_service,
         llm=llm,
         system_prompt=config.provided.HR_SYSTEM_PROMPT,
     )
