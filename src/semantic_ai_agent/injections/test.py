@@ -11,7 +11,6 @@ from semantic_ai_agent.domain.cache_stats import CacheStats
 from semantic_ai_agent.domain.hydrate_result import HydrateResult
 from semantic_ai_agent.services.cache.exceptions import FaqFileNotFoundError
 from semantic_ai_agent.services.chat.chat import ChatService
-from semantic_ai_agent.settings import SettingsType
 
 
 class MockCacheQueryService:
@@ -121,16 +120,6 @@ class MockLLM:
         return mock_resp
 
 
-_test_settings = SettingsType(
-    OPENAI_API_KEY="test-key",
-    CACHE_NAME="test-cache",
-    CACHE_DISTANCE_THRESHOLD=0.3,
-    CACHE_TTL_SECONDS=60,
-    OPENAI_MODEL="gpt-test",
-    REDIS="localhost",
-    REDIS_PORT=6379,
-)
-
 _mock_query = MockCacheQueryService()
 _mock_store = MockCacheStoreService(query_service=_mock_query)
 _mock_hydration = MockCacheHydrationService()
@@ -148,8 +137,6 @@ class TestContainer(containers.DeclarativeContainer):
             "semantic_ai_agent.api.routes.health.health",
         ]
     )
-
-    config: providers.Provider[SettingsType] = providers.Object(_test_settings)
 
     cache_query_service = providers.Object(_mock_query)
     cache_store_service = providers.Object(_mock_store)

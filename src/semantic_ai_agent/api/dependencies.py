@@ -11,7 +11,6 @@ from semantic_ai_agent.services.cache.query import CacheQueryService
 from semantic_ai_agent.services.cache.stats import CacheStatsService
 from semantic_ai_agent.services.cache.store import CacheStoreService
 from semantic_ai_agent.services.chat.chat import ChatService
-from semantic_ai_agent.settings import SettingsType
 
 CacheAdminServiceDependency = Annotated[
     CacheAdminService,
@@ -41,9 +40,4 @@ CacheStoreServiceDependency = Annotated[
 ChatServiceDependency = Annotated[
     ChatService,
     Depends(Provide["chat_service"]),
-]
-
-SettingsDependency = Annotated[
-    SettingsType,
-    Depends(Provide["config"]),
 ]

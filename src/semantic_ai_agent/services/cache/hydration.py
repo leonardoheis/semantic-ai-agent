@@ -8,7 +8,7 @@ from redisvl.extensions.cache.llm import SemanticCache
 
 from semantic_ai_agent.domain.base import DomainBase
 from semantic_ai_agent.domain.hydrate_result import HydrateResult
-from semantic_ai_agent.services.cache.exceptions import CacheHydrationError, FaqFileNotFoundError
+from semantic_ai_agent.services.cache.exceptions import CacheHydrationError
 from semantic_ai_agent.services.helper import load_faq_json
 from semantic_ai_agent.settings import Settings
 
@@ -28,7 +28,7 @@ class CacheHydrationService(DomainBase):
             self._load_df(df, q_col="question", a_col="response")
         except Exception as exc:
             raise CacheHydrationError(detail=f"Hydration failed: {exc}") from exc
-        
+
         categories = sorted(df["category"].unique().tolist()) if "category" in df.columns else []
         return HydrateResult(entries_loaded=len(df), categories=categories)
 
