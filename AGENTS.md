@@ -34,6 +34,8 @@ Do not commit or push — the user handles all commits and pushes explicitly.
 
 Don't read any .env file, use the .env.example file to understand the environment variables and create your own .env file.
 
+When the user commits a change, you should run `uv run poe check` to ensure the change is valid and fix any errors.
+
 ## Project structure
 
 ```
