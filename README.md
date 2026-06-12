@@ -23,7 +23,8 @@ cp .env.example .env        # then edit .env and set your OPENAI_API_KEY
 uv run jupyter lab
 ```
 
-Open `notebooks/01-experiment.ipynb` and run all cells in order.
+Open `notebooks/01-experiment.ipynb` and run all cells in order.  
+The notebook uses `mock_llm` automatically when running under `poe check`; real OpenAI calls are only made in interactive JupyterLab sessions.
 
 ## Running the project
 
@@ -99,10 +100,10 @@ Open `notebooks/01-experiment.ipynb` and run cells in order. The notebook walks 
 
 1. **Imports and Redis connection** — verifies Redis is reachable
 2. **Load FAQ data** — reads 26 curated HR FAQ pairs from `data/raw/faq_data.json`
-3. **Initialize cache** — creates a `SemanticCacheWrapper` with distance threshold and TTL
+3. **Initialize cache** — creates a `SemanticCache` (via `CacheQueryService`) with distance threshold and TTL
 4. **Embedding model** — loads `all-MiniLM-L6-v2` (384 dimensions) for semantic encoding
-5. **Hydrate cache** — bulk-loads all FAQ pairs into Redis
-6. **Cache logic** — `get_cached_or_generate()` checks cache first, calls GPT on miss, stores the result
+5. **Hydrate cache** — bulk-loads all FAQ pairs into Redis via `CacheHydrationService`
+6. **Cache logic** — `get_cached_or_generate()` checks cache first, calls GPT on miss, stores the result via `CacheStoreService`
 7. **Test hits and misses** — validates cache behavior with semantically similar and different queries
 8. **Threshold tuning** — sweeps distance thresholds and plots precision/recall/F1 curves
 9. **Performance evaluation** — measures hit rate, latency, and cost savings against spec goals
@@ -140,26 +141,55 @@ notebooks/
   01-experiment.ipynb               # Full semantic caching experiment
 src/semantic_ai_agent/
   api/                              # FastAPI chatbot API
-    error_handlers/                 # Custom exception classes and handlers
-    routes/                         # Route definitions (chat, cache, health)
-    app.py                          # App factory and lifespan
-    dependencies.py                 # DI providers
-    schema.py                       # Pydantic v2 request/response schemas
+    error_handlers/                 # Central exception handler registry + per-service handlers
+    routes/
+      cache/                        # /cache endpoints — hydrate, clear, stats
+        schema.py                   # HydrateRequest, CacheStatsResponse
+        examples.py                 # OpenAPI request body examples
+      chat/                         # /chat endpoint — multi-turn conversation
+        schema.py                   # ChatRequest, ChatResponse
+        examples.py                 # OpenAPI request body examples
+      health/                       # /health endpoint
+        schema.py                   # HealthResponse
+    app.py                          # App factory (auto-discovers routers and exception handlers)
+    dependencies.py                 # Annotated DI type aliases (Provide[...])
+    schema.py                       # BaseSchema (camelCase aliasing, shared config)
   domain/                           # Pure Pydantic v2 domain models
+    base.py                         # DomainBase
+    faq_data.py                     # FaqEntry (raw FAQ record)
+    cache_entry.py                  # CacheEntry
+    cache_result.py                 # CacheResult / CacheResults
+    cache_stats.py                  # CacheStats
+    chat_message.py                 # ChatMessage (conversation history)
+    chat_result.py                  # ChatResult (ask() return value)
+    hydrate_result.py               # HydrateResult
+    protocols.py                    # CacheReader / CacheWriter protocols
   services/
-    chat/                           # ChatService (cache + LLM orchestration)
-    helper.py                       # Shared service helpers
-  injections/                       # DI containers (production + test mocks)
+    cache/                          # Cache service layer (SRP-split)
+      query.py                      # CacheQueryService — lookup / reranking
+      store.py                      # CacheStoreService — write new entries
+      hydration.py                  # CacheHydrationService — bulk FAQ load
+      admin.py                      # CacheAdminService — clear
+      stats.py                      # CacheStatsService — read index metadata
+      exceptions.py                 # Cache-specific dataclass exceptions
+    chat/
+      chat.py                       # ChatService — session history, cache + LLM orchestration
+      exceptions.py                 # Chat-specific dataclass exceptions
+    helper.py                       # Shared helpers (load_faq_json)
+  injections/
+    production.py                   # DeclarativeContainer — Singletons (Redis) + Factories (services)
+    test.py                         # TestContainer — in-memory mocks
   cache/
-    config.py                       # Environment config and API key loading
-    wrapper.py                      # SemanticCacheWrapper (check, store, hydrate)
-    evals.py                        # CacheEvaluator and PerfEval metrics
+    config.py                       # API key loading helper
+    evals.py                        # CacheEvaluator and PerfEval metrics (used by notebooks)
+  utils/
+    utils.py                        # ping_redis / try_connect_to_redis
+  settings.py                       # Pydantic BaseSettings (env-driven configuration)
   frontend/                         # Placeholder for future UI
-  utils/                            # Shared utilities
-  settings.py                       # Pydantic Settings (env-based configuration)
 tests/
-  api/                              # API route tests
-  services/                         # Service unit tests
+  api/                              # API route tests (test_chat, test_cache, test_health)
+  services/                         # Service unit tests (test_chat_service)
+  conftest.py                       # Shared pytest fixtures
 ```
 
 ## Cache design summary
@@ -184,7 +214,7 @@ uv run poe lint        # ruff check + format verification
 uv run poe fmt         # ruff auto-format
 uv run poe typecheck   # mypy on src/ and notebooks/
 uv run poe test        # pytest tests/ (API and service tests)
-uv run poe nbtest      # pytest --nbmake (executes notebooks end-to-end)
+uv run poe nbtest      # pytest --nbmake (executes notebooks; USE_MOCK_LLM=true auto-set)
 uv run poe serve       # start the FastAPI server on port 8000
 ```
 
@@ -197,7 +227,7 @@ Always run `uv run poe check` after making changes.
 | API framework | FastAPI, Pydantic v2, uvicorn |
 | Vector store and caching | Redis Stack, RedisVL |
 | Semantic embeddings | sentence-transformers (`all-MiniLM-L6-v2`) |
-| LLM | OpenAI GPT via LangChain |
+| LLM | OpenAI GPT-4o-mini via LangChain |
 | Data processing | pandas, NumPy |
 | Visualization | matplotlib |
 | Quality tooling | ruff, mypy, pytest, pre-commit |
