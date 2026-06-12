@@ -20,6 +20,8 @@ def try_connect_to_redis(url: str) -> _redis.Redis:
     """Connect to Redis or raise with a helpful message (used by notebooks).
     Returns:
         Redis client object if connection is successful.
+    Raises:
+        ConnectionError: If the connection to Redis fails.
     """
     client = ping_redis(url)
     if client is None:

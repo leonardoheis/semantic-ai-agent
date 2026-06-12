@@ -70,7 +70,9 @@ def get_model_cost(provider: str, model: str) -> dict[str, float]:
     return {"input": 0.001, "output": 0.002}
 
 
-def _harmonic_mean(a, b):
+def _harmonic_mean(
+    a: float,
+    b: float) -> float:
     if a + b == 0:
         return 0
     return 2 * a * b / (a + b)
@@ -99,7 +101,10 @@ class CacheEvaluator:
         self.is_from_full_retrieval = is_from_full_retrieval
 
     @classmethod
-    def from_full_retrieval(cls, true_labels, cache_results) -> "CacheEvaluator":
+    def from_full_retrieval(
+        cls,
+        true_labels: list[bool],
+        cache_results: list[CacheResults]) -> "CacheEvaluator":
         """Create evaluator from full retrieval results.
 
         Returns:
@@ -236,16 +241,6 @@ class PerfEval:
         self.last_time: float | None = None
         self.total_queries: int | None = None
         self.llm_calls: list[dict] = []
-
-    def __enter__(self):
-        self.last_time = time.time()
-        self.durations = []
-        self.durations_by_label = {}
-        self.llm_calls = []
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        pass
 
     def start(self) -> None:
         """Start timing."""

@@ -31,6 +31,8 @@ class CacheQueryService(DomainBase):
         """Check the semantic cache for a matching entry.
         Returns:
             Cache lookup results including any semantic matches for the query.
+        Raises:
+            CacheQueryError: If the cache query fails.
         """
         try:
             num = num_results if self.reranker is None else max(10, 3 * num_results)

@@ -20,6 +20,8 @@ class CacheStatsService(DomainBase):
 
         Returns:
             CacheStats object containing total entries, index name, distance threshold, and TTL.
+        Raises:
+            CacheStatsError: If the cache index statistics cannot be retrieved.
         """
         try:
             index_info = self.cache.index.info()

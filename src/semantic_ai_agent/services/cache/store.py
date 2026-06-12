@@ -15,7 +15,12 @@ class CacheStoreService(DomainBase):
     cache: SemanticCache = Field(..., description="The shared semantic cache instance.")
 
     def store(self, prompt: str, response: str, **kwargs: object) -> None:
-        """Store a prompt-response pair in the cache."""
+        """Store a prompt-response pair in the cache.
+        Returns:
+            None if the entry is successfully stored.
+        Raises:
+            CacheStoreError: If the entry cannot be stored.
+        """
         try:
             self.cache.store(prompt=prompt, response=response, **kwargs)
         except Exception as exc:
