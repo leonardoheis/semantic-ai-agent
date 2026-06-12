@@ -1,6 +1,6 @@
 """Structural protocols for service dependencies."""
 
-from typing import Optional, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from semantic_ai_agent.domain.cache_result import CacheResults
 
@@ -10,7 +10,7 @@ class CacheReader(Protocol):
     def check(
         self,
         query: str,
-        distance_threshold: Optional[float] = None,
+        distance_threshold: float | None = None,
         num_results: int = 1,
         use_reranker_distance: bool = False,
     ) -> CacheResults: ...

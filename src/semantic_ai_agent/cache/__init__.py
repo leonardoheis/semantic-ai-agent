@@ -9,18 +9,19 @@ SemanticCacheWrapper has been replaced by focused services:
 CacheResult and CacheResults are domain models (domain/cache_result.py).
 """
 
-from semantic_ai_agent.services.cache import CacheQueryService, CacheHydrationService
+from semantic_ai_agent.domain.cache_result import CacheResult, CacheResults
+from semantic_ai_agent.services.cache import CacheHydrationService, CacheQueryService
+from semantic_ai_agent.utils import try_connect_to_redis
+
 from .config import config, load_openai_key
 from .evals import CacheEvaluator, PerfEval
-from semantic_ai_agent.domain.cache_result import CacheResult, CacheResults
-from semantic_ai_agent.utils import try_connect_to_redis
 
 __all__ = [
     "CacheEvaluator",
+    "CacheHydrationService",
+    "CacheQueryService",
     "CacheResult",
     "CacheResults",
-    "CacheQueryService",
-    "CacheHydrationService",
     "PerfEval",
     "config",
     "load_openai_key",

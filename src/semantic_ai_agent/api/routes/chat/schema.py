@@ -1,6 +1,6 @@
 """Chat route request/response schemas."""
 
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import Field
 
@@ -8,7 +8,7 @@ from semantic_ai_agent.api.schema import BaseSchema
 
 
 class ChatRequest(BaseSchema):
-    session_id: Optional[str] = Field(
+    session_id: str | None = Field(
         default=None,
         description="Session ID for multi-turn conversation. Null to start a new session.",
     )
@@ -24,7 +24,7 @@ class ChatResponse(BaseSchema):
     answer: str
     source: Literal["cache_hit", "llm_generated"]
     latency_ms: float
-    distance: Optional[float] = None
+    distance: float | None = None
 
 
 class ErrorResponse(BaseSchema):

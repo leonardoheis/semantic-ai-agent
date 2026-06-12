@@ -3,16 +3,16 @@
 from dependency_injector.wiring import inject
 from fastapi import APIRouter
 
-from .schema import HealthResponse
+from semantic_ai_agent.settings import Settings
 from semantic_ai_agent.utils import ping_redis
 
-from semantic_ai_agent.settings import Settings
+from .schema import HealthResponse
 
 router = APIRouter(tags=["health"])
 
 
-@router.get("/", response_model=HealthResponse)
-@router.get("/health", response_model=HealthResponse)
+@router.get("/")
+@router.get("/health")
 @inject
 def health_check() -> HealthResponse:
     client = ping_redis(Settings.REDIS_URL)

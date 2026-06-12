@@ -3,7 +3,7 @@
 from semantic_ai_agent.injections.test import create_mock_chat_service
 
 
-def test_ask_returns_llm_on_miss():
+def test_ask_returns_llm_on_miss() -> None:
     svc = create_mock_chat_service()
     result = svc.ask("What is the PTO policy?")
     assert result["source"] == "llm_generated"
@@ -11,7 +11,7 @@ def test_ask_returns_llm_on_miss():
     assert result["latency_ms"] >= 0
 
 
-def test_ask_returns_cache_hit_after_store():
+def test_ask_returns_cache_hit_after_store() -> None:
     svc = create_mock_chat_service()
     svc.store.store(prompt="What is PTO?", response="15 days.")
     result = svc.ask("What is PTO?")
@@ -20,7 +20,7 @@ def test_ask_returns_cache_hit_after_store():
     assert result["distance"] == 0.0
 
 
-def test_session_persists_across_calls():
+def test_session_persists_across_calls() -> None:
     svc = create_mock_chat_service()
     r1 = svc.ask("Hello")
     sid = r1["session_id"]
@@ -30,7 +30,7 @@ def test_session_persists_across_calls():
     assert len(history) == 4  # 2 user + 2 assistant
 
 
-def test_new_session_created_when_none():
+def test_new_session_created_when_none() -> None:
     svc = create_mock_chat_service()
     r1 = svc.ask("Question 1")
     r2 = svc.ask("Question 2")

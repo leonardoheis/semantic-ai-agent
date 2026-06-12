@@ -6,15 +6,15 @@ from dependency_injector.wiring import inject
 from fastapi import APIRouter, Body
 
 from semantic_ai_agent.api.dependencies import ChatServiceDependency
-from .schema import ChatRequest, ChatResponse
 from semantic_ai_agent.services.chat.exceptions import CacheConnectionError, LLMError
 
 from .examples import CHAT_EXAMPLES
+from .schema import ChatRequest, ChatResponse
 
 router = APIRouter(tags=["chat"])
 
 
-@router.post("/chat", response_model=ChatResponse)
+@router.post("/chat")
 @inject
 def chat(
     body: Annotated[ChatRequest, Body(openapi_examples=CHAT_EXAMPLES)],

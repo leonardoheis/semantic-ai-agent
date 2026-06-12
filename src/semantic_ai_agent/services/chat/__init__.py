@@ -4,7 +4,7 @@ from .chat import ChatService
 from .exceptions import CacheConnectionError, LLMError
 
 __all__ = [
-    "ChatService",
     "CacheConnectionError",
+    "ChatService",
     "LLMError",
 ]

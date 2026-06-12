@@ -8,14 +8,13 @@ This module provides tools for:
 """
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
+import tiktoken
 
 from semantic_ai_agent.domain.cache_result import CacheResults
-
-import tiktoken
 
 
 def count_tokens(text: str, model: str = "gpt-4o-mini") -> int:
@@ -46,11 +45,12 @@ def count_tokens(text: str, model: str = "gpt-4o-mini") -> int:
     return len(encoding.encode(text))
 
 
-def get_model_cost(provider: str, model: str) -> Dict[str, float]:
+def get_model_cost(provider: str, model: str) -> dict[str, float]:
     """
     Get cost per 1K tokens for a model.
 
-    Returns dict with "input" and "output" costs.
+    Returns:
+        Dict with "input" and "output" costs per 1K tokens.
     """
     costs = {
         "openai": {
@@ -63,7 +63,7 @@ def get_model_cost(provider: str, model: str) -> Dict[str, float]:
     if provider in costs and model in costs[provider]:
         return costs[provider][model]
 
-    for p, models in costs.items():
+    for models in costs.values():
         if model in models:
             return models[model]
 
@@ -90,21 +90,29 @@ class CacheEvaluator:
 
     def __init__(
         self,
-        true_labels: List[bool],
-        cache_results: List[CacheResults],
+        true_labels: list[bool],
+        cache_results: list[CacheResults],
         is_from_full_retrieval: bool = False,
-    ):
+    ) -> None:
         self.true_labels = np.array(true_labels)
         self.cache_results = np.array(cache_results)
         self.is_from_full_retrieval = is_from_full_retrieval
 
     @classmethod
     def from_full_retrieval(cls, true_labels, cache_results) -> "CacheEvaluator":
-        """Create evaluator from full retrieval results."""
+        """Create evaluator from full retrieval results.
+
+        Returns:
+            A CacheEvaluator configured for full-retrieval evaluation.
+        """
         return cls(true_labels, cache_results, is_from_full_retrieval=True)
 
     def matches_df(self) -> pd.DataFrame:
-        """Get DataFrame of query-match-distance-label tuples."""
+        """Get DataFrame of query-match-distance-label tuples.
+
+        Returns:
+            DataFrame with query, match, distance, and true_label columns.
+        """
         query = [r.query for r in self.cache_results]
         match = [r.matches[0].prompt if len(r.matches) > 0 else None for r in self.cache_results]
         distance = [
@@ -121,17 +129,13 @@ class CacheEvaluator:
             }
         )
 
-    def get_metrics(self, distance_threshold: Optional[float] = None) -> Dict[str, Any]:
+    def get_metrics(self, distance_threshold: float | None = None) -> dict[str, Any]:
         """
         Calculate evaluation metrics at given threshold.
 
-        Returns dict with:
-        - cache_hit_rate: fraction of queries that hit cache
-        - precision: TP / (TP + FP)
-        - recall: TP / (TP + FN)
-        - f1_score: harmonic mean of precision and recall
-        - accuracy: (TP + TN) / total
-        - confusion_matrix: 2x2 numpy array
+        Returns:
+            Dict with cache_hit_rate, precision, recall, f1_score, accuracy,
+            utility, and confusion_matrix keys.
         """
         T = 1 if distance_threshold is None else distance_threshold
 
@@ -173,17 +177,15 @@ class CacheEvaluator:
         metric_to_maximize: str = "f1_score",
         threshold_range: tuple = (0, 1),
         num_samples: int = 100,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Sweep thresholds to find optimal value.
 
-        Returns dict with:
-        - best_threshold: optimal threshold for target metric
-        - all_metrics: dict of metric arrays over thresholds
-        - thresholds: array of tested thresholds
+        Returns:
+            Dict with best_threshold, all_metrics, and thresholds keys.
         """
         thresholds = np.linspace(threshold_range[0], threshold_range[1], num_samples)
-        all_metrics: Dict[str, List[Any]] = {}
+        all_metrics: dict[str, list[Any]] = {}
 
         for threshold in thresholds:
             metrics = self.get_metrics(float(threshold))
@@ -228,12 +230,12 @@ class PerfEval:
         costs = perf.get_costs()
     """
 
-    def __init__(self):
-        self.durations: List[float] = []
-        self.durations_by_label: Dict[str, List[float]] = {}
-        self.last_time: Optional[float] = None
-        self.total_queries: Optional[int] = None
-        self.llm_calls: List[Dict] = []
+    def __init__(self) -> None:
+        self.durations: list[float] = []
+        self.durations_by_label: dict[str, list[float]] = {}
+        self.last_time: float | None = None
+        self.total_queries: int | None = None
+        self.llm_calls: list[dict] = []
 
     def __enter__(self):
         self.last_time = time.time()
@@ -245,11 +247,11 @@ class PerfEval:
     def __exit__(self, exc_type, exc_value, traceback):
         pass
 
-    def start(self):
+    def start(self) -> None:
         """Start timing."""
         self.last_time = time.time()
 
-    def tick(self, label: Optional[str] = None):
+    def tick(self, label: str | None = None) -> None:
         """Record elapsed time since last start/tick."""
         now = time.time()
         if self.last_time is None:
@@ -260,13 +262,13 @@ class PerfEval:
             self.durations_by_label.setdefault(label, []).append(dt)
         self.last_time = now
 
-    def set_total_queries(self, n: int):
+    def set_total_queries(self, n: int) -> None:
         """Set total number of queries for rate calculations."""
         self.total_queries = n
 
     def record_llm_call(
         self, model: str, input_text: str, output_text: str, provider: str = "openai"
-    ):
+    ) -> None:
         """
         Record an LLM call for cost tracking.
 
@@ -288,8 +290,12 @@ class PerfEval:
             }
         )
 
-    def _stats(self, values: List[float]) -> Dict[str, float]:
-        """Calculate statistics for a list of duration values."""
+    def _stats(self, values: list[float]) -> dict[str, float]:
+        """Calculate statistics for a list of duration values.
+
+        Returns:
+            Dict with count, average_latency_ms, and p50/p90/p95/p99 latency stats.
+        """
         if len(values) == 0:
             return {
                 "count": 0,
@@ -309,7 +315,7 @@ class PerfEval:
             "p99_ms": float(np.percentile(arr, 99) * 1000.0),
         }
 
-    def get_metrics(self, labels: Optional[List[str]] = None) -> Dict[str, Any]:
+    def get_metrics(self, labels: list[str] | None = None) -> dict[str, Any]:
         """
         Get performance metrics.
 
@@ -326,7 +332,7 @@ class PerfEval:
                 by_label[lbl] = self._stats(self.durations_by_label.get(lbl, []))
         return {"overall": overall, "by_label": by_label}
 
-    def get_costs(self) -> Dict[str, Any]:
+    def get_costs(self) -> dict[str, Any]:
         """
         Calculate costs for all recorded LLM calls.
 
@@ -334,7 +340,7 @@ class PerfEval:
             Dict with total_cost, by_model breakdown, and per-query averages
         """
         total = 0.0
-        by_model: Dict[str, float] = {}
+        by_model: dict[str, float] = {}
 
         for call in self.llm_calls:
             model = call["model"]
@@ -361,8 +367,12 @@ class PerfEval:
 
         return result
 
-    def summary(self, labels: Optional[List[str]] = None) -> str:
-        """Get a formatted summary of performance metrics."""
+    def summary(self, labels: list[str] | None = None) -> str:
+        """Get a formatted summary of performance metrics.
+
+        Returns:
+            Multi-line string summarizing latency and cost metrics.
+        """
         metrics = self.get_metrics(labels)
         costs = self.get_costs()
 
@@ -372,13 +382,10 @@ class PerfEval:
             lines.append(f"Total Queries: {self.total_queries}")
 
         overall = metrics["overall"]
-        lines.append(f"Average Latency: {overall['average_latency_ms']:.1f}ms")
-        lines.append(f"P50 Latency: {overall['p50_ms']:.1f}ms")
-        lines.append(f"P95 Latency: {overall['p95_ms']:.1f}ms")
+        lines.extend((f"Average Latency: {overall['average_latency_ms']:.1f}ms", f"P50 Latency: {overall['p50_ms']:.1f}ms", f"P95 Latency: {overall['p95_ms']:.1f}ms"))
 
         if labels:
-            lines.append("")
-            lines.append("By Label:")
+            lines.extend(("", "By Label:"))
             for label in labels:
                 if label in metrics["by_label"]:
                     stats = metrics["by_label"][label]
@@ -387,9 +394,7 @@ class PerfEval:
                     )
 
         if costs["calls"] > 0:
-            lines.append("")
-            lines.append(f"LLM Calls: {costs['calls']}")
-            lines.append(f"Total Cost: ${costs['total_cost']:.4f}")
+            lines.extend(("", f"LLM Calls: {costs['calls']}", f"Total Cost: ${costs['total_cost']:.4f}"))
             if "avg_cost_per_query" in costs:
                 lines.append(f"Avg Cost/Query: ${costs['avg_cost_per_query']:.6f}")
 

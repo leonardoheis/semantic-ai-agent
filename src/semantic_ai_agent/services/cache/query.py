@@ -1,6 +1,6 @@
 """Cache query — reads entries from the semantic cache."""
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from pydantic import ConfigDict, Field
 from redisvl.extensions.cache.llm import SemanticCache
@@ -19,20 +19,23 @@ class CacheQueryService(DomainBase):
     model_config = ConfigDict(arbitrary_types_allowed=True, frozen=False)
 
     cache: SemanticCache = Field(..., description="The shared semantic cache instance.")
-    reranker: Optional[RerankerFn] = Field(default=None, description="Optional reranking function.")
+    reranker: RerankerFn | None = Field(default=None, description="Optional reranking function.")
 
     def check(
         self,
         query: str,
-        distance_threshold: Optional[float] = None,
+        distance_threshold: float | None = None,
         num_results: int = 1,
         use_reranker_distance: bool = False,
     ) -> CacheResults:
-        """Check the semantic cache for a matching entry."""
+        """Check the semantic cache for a matching entry.
+        Returns:
+            Cache lookup results including any semantic matches for the query.
+        """
         try:
-            _num = num_results if self.reranker is None else max(10, 3 * num_results)
+            num = num_results if self.reranker is None else max(10, 3 * num_results)
             candidates = self.cache.check(
-                query, distance_threshold=distance_threshold, num_results=_num
+                query, distance_threshold=distance_threshold, num_results=num
             )
         except Exception as exc:
             raise CacheQueryError(detail=f"Cache query failed: {exc}") from exc
@@ -64,12 +67,15 @@ class CacheQueryService(DomainBase):
     def check_many(
         self,
         queries: list[str],
-        distance_threshold: Optional[float] = None,
+        distance_threshold: float | None = None,
         show_progress: bool = False,
         num_results: int = 1,
         use_reranker_distance: bool = False,
     ) -> list[CacheResults]:
-        """Check the semantic cache for multiple queries."""
+        """Check the semantic cache for multiple queries.
+        Returns:
+            One CacheResults object per input query, in the same order.
+        """
         return [
             self.check(q, distance_threshold, num_results, use_reranker_distance)
             for q in tqdm(queries, disable=not show_progress)
@@ -84,7 +90,10 @@ class CacheQueryService(DomainBase):
         self.reranker = None
 
     def has_reranker(self) -> bool:
-        """Return True if a reranker is registered."""
+        """Return True if a reranker is registered.
+        Returns:
+            True when a reranker function is registered, otherwise False.
+        """
         return self.reranker is not None
 
     def check_cache(self, query: str) -> CacheResults:

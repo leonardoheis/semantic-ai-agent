@@ -2,7 +2,7 @@
 
 import time
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -23,14 +23,17 @@ class ChatService(BaseModel):
     )
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    def _ensure_session(self, session_id: Optional[str]) -> str:
+    def _ensure_session(self, session_id: str | None) -> str:
         sid = session_id or str(uuid.uuid4())
         if sid not in self.sessions:
             self.sessions[sid] = []
         return sid
 
-    def ask(self, message: str, session_id: Optional[str] = None) -> ChatResult:
-        """Process a chat message: check cache, call LLM on miss, return result dict."""
+    def ask(self, message: str, session_id: str | None = None) -> ChatResult:
+        """Process a chat message: check cache, call LLM on miss, return result dict.
+        Returns:
+            ChatResult object containing the session ID, answer, source, latency, and distance.
+        """
         sid = self._ensure_session(session_id)
         start = time.perf_counter()
 
@@ -66,8 +69,7 @@ class ChatService(BaseModel):
     def _call_llm(self, session_id: str, message: str) -> str:
         history = self.sessions.get(session_id, [])
         messages: list[dict[str, str]] = [{"role": "system", "content": self.system_prompt}]
-        for msg in history:
-            messages.append({"role": msg.role, "content": msg.content})
+        messages.extend({"role": msg.role, "content": msg.content} for msg in history)
         messages.append({"role": "user", "content": message})
         response = self.llm.invoke(messages)
         return str(response.content)
@@ -78,4 +80,8 @@ class ChatService(BaseModel):
         )
 
     def get_history(self, session_id: str) -> list[ChatMessage]:
+        """Get the chat history for a given session ID.
+        Returns:
+            List of ChatMessage objects representing the chat history.
+        """
         return self.sessions.get(session_id, [])

@@ -1,6 +1,5 @@
 """Cache result domain models."""
 
-from typing import Optional
 
 from .base import DomainBase
 
@@ -10,9 +9,9 @@ class CacheResult(DomainBase):
     response: str
     vector_distance: float
     cosine_similarity: float
-    reranker_type: Optional[str] = None
-    reranker_score: Optional[float] = None
-    reranker_reason: Optional[str] = None
+    reranker_type: str | None = None
+    reranker_score: float | None = None
+    reranker_reason: str | None = None
 
 
 class CacheResults(DomainBase):

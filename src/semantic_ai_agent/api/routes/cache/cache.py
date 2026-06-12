@@ -3,21 +3,22 @@
 from typing import Annotated
 
 from dependency_injector.wiring import inject
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, Body, HTTPException
 
 from semantic_ai_agent.api.dependencies import (
     CacheAdminServiceDependency,
     CacheHydrationServiceDependency,
     CacheStatsServiceDependency,
 )
-from .schema import CacheStatsResponse, HydrateRequest, HydrateResponse
 from semantic_ai_agent.services.cache.exceptions import FaqFileNotFoundError
+
 from .examples import EXAMPLES
+from .schema import CacheStatsResponse, HydrateRequest, HydrateResponse
 
 router = APIRouter(prefix="/cache", tags=["cache"])
 
 
-@router.post("/hydrate", response_model=HydrateResponse)
+@router.post("/hydrate")
 @inject
 def hydrate_cache(
     body: Annotated[HydrateRequest, Body(openapi_examples=EXAMPLES)],
@@ -37,7 +38,7 @@ def clear_cache(svc: CacheAdminServiceDependency) -> dict[str, str]:
     return {"detail": "Cache cleared"}
 
 
-@router.get("/stats", response_model=CacheStatsResponse)
+@router.get("/stats")
 @inject
 def cache_stats(svc: CacheStatsServiceDependency) -> CacheStatsResponse:
     s = svc.stats()

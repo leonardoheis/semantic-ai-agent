@@ -4,7 +4,10 @@ import redis as _redis
 
 
 def ping_redis(url: str) -> _redis.Redis | None:
-    """Connect to Redis and return the client, or None on any failure."""
+    """Connect to Redis and return the client, or None on any failure.
+    Returns:
+        Redis client object if connection is successful, otherwise None.
+    """
     try:
         client = _redis.Redis.from_url(url)
         client.ping()
@@ -14,13 +17,12 @@ def ping_redis(url: str) -> _redis.Redis | None:
 
 
 def try_connect_to_redis(url: str) -> _redis.Redis:
-    """Connect to Redis or raise with a helpful message (used by notebooks)."""
+    """Connect to Redis or raise with a helpful message (used by notebooks).
+    Returns:
+        Redis client object if connection is successful.
+    """
     client = ping_redis(url)
     if client is None:
-        print(
-            "Cannot connect to Redis. "
-            "Try: docker run -d --name redis -p 6379:6379 redis/redis-stack:latest"
-        )
-        raise _redis.ConnectionError(f"Cannot connect to Redis at {url}")
-    print("Redis is running and accessible!")
+        msg = f"Cannot connect to Redis at {url}"
+        raise _redis.ConnectionError(msg)
     return client

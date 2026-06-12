@@ -1,6 +1,6 @@
 """Cache hydration — populates the semantic cache from FAQ data."""
 
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 import pandas as pd
 from pydantic import ConfigDict, Field
@@ -21,7 +21,11 @@ class CacheHydrationService(DomainBase):
     cache: SemanticCache = Field(..., description="The shared semantic cache instance.")
 
     def hydrate(self) -> HydrateResult:
-        """Load FAQ data from disk and populate the semantic cache."""
+        """Load FAQ data from disk and populate the semantic cache.
+
+        Returns:
+            HydrateResult with the number of entries loaded and category list.
+        """
         try:
             entries = load_faq_json(Settings.DEFAULT_FAQ_PATH)
             df = pd.DataFrame([e.model_dump() for e in entries])
@@ -39,7 +43,7 @@ class CacheHydrationService(DomainBase):
         q_col: str = "question",
         a_col: str = "answer",
         clear: bool = True,
-        ttl_override: Optional[int] = None,
+        ttl_override: int | None = None,
     ) -> None:
         """Populate the cache from a DataFrame."""
         try:
@@ -54,7 +58,7 @@ class CacheHydrationService(DomainBase):
         pairs: Iterable[tuple[str, str]],
         *,
         clear: bool = True,
-        ttl_override: Optional[int] = None,
+        ttl_override: int | None = None,
     ) -> None:
         """Populate the cache from an iterable of (question, answer) pairs."""
         try:
@@ -71,7 +75,7 @@ class CacheHydrationService(DomainBase):
         *,
         q_col: str,
         a_col: str,
-        ttl_override: Optional[int] = None,
+        ttl_override: int | None = None,
     ) -> None:
         for row in df[[q_col, a_col]].itertuples(index=False, name=None):
             q, a = row

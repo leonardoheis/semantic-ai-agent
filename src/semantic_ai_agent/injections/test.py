@@ -1,7 +1,7 @@
 """Test dependency bindings — mocked services and LLM for testing without external services."""
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import MagicMock
 
 from dependency_injector import containers, providers
@@ -22,7 +22,7 @@ class MockCacheQueryService:
     def check(
         self,
         query: str,
-        distance_threshold: Optional[float] = None,
+        distance_threshold: float | None = None,
         num_results: int = 1,
         use_reranker_distance: bool = False,
     ) -> CacheResults:
@@ -69,7 +69,7 @@ class MockCacheHydrationService:
     def __init__(self) -> None:
         self.entries: dict[str, str] = {}
 
-    def hydrate(self, faq_path: Optional[str] = None) -> HydrateResult:
+    def hydrate(self, faq_path: str | None = None) -> HydrateResult:
         if faq_path and not Path(faq_path).exists():
             raise FaqFileNotFoundError(detail=f"FAQ file not found: {faq_path}")
         return HydrateResult(entries_loaded=0, categories=[])

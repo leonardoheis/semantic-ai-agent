@@ -2,7 +2,6 @@
 
 import redis
 from dependency_injector import containers, providers
-
 from langchain_openai import ChatOpenAI
 from redisvl.extensions.cache.embeddings import EmbeddingsCache
 from redisvl.extensions.cache.llm import SemanticCache

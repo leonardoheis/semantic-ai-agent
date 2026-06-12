@@ -16,7 +16,11 @@ class CacheStatsService(DomainBase):
     cache: SemanticCache = Field(..., description="The shared semantic cache instance.")
 
     def stats(self) -> CacheStats:
-        """Return current cache index statistics."""
+        """Return current cache index statistics.
+
+        Returns:
+            CacheStats object containing total entries, index name, distance threshold, and TTL.
+        """
         try:
             index_info = self.cache.index.info()
         except Exception as exc:

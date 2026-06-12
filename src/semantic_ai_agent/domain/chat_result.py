@@ -2,7 +2,7 @@
 
 """Chat result domain model."""
 
-from typing import Literal, Optional
+from typing import Literal
 
 from .base import DomainBase
 
@@ -12,4 +12,4 @@ class ChatResult(DomainBase):
     answer: str
     source: Literal["cache_hit", "llm_generated"]
     latency_ms: float
-    distance: Optional[float] = None
+    distance: float | None = None
