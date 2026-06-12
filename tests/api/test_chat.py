@@ -1,12 +1,14 @@
 """Tests for POST /chat."""
+
 from fastapi.testclient import TestClient
+from starlette import status
 
 from semantic_ai_agent.injections.test import TestContainer
 
 
 def test_chat_returns_new_session(client: TestClient) -> None:
     response = client.post("/chat", json={"message": "How many vacation days do I get?"})
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert "sessionId" in data
     assert "answer" in data
@@ -18,7 +20,7 @@ def test_chat_with_session_id(client: TestClient) -> None:
     r1 = client.post("/chat", json={"message": "Hello"})
     sid = r1.json()["sessionId"]
     r2 = client.post("/chat", json={"sessionId": sid, "message": "Follow-up question"})
-    assert r2.status_code == 200
+    assert r2.status_code == status.HTTP_200_OK
     assert r2.json()["sessionId"] == sid
 
 
@@ -40,4 +42,4 @@ def test_chat_cache_miss(client: TestClient) -> None:
 
 def test_chat_empty_message_rejected(client: TestClient) -> None:
     response = client.post("/chat", json={"message": ""})
-    assert response.status_code == 422
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

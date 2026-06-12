@@ -30,6 +30,6 @@ class CacheStatsService(DomainBase):
         return CacheStats(
             total_entries=int(index_info.get("num_docs", 0)),
             index_name=self.cache.index.name,
-            distance_threshold=self.cache._distance_threshold,
+            distance_threshold=self.cache.distance_threshold,
             ttl_seconds=self.cache.ttl or 0,
         )

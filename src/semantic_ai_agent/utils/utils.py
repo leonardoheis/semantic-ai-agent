@@ -3,17 +3,20 @@
 import redis as _redis
 
 
-def ping_redis(url: str) -> _redis.Redis | None:
-    """Connect to Redis and return the client, or None on any failure.
+def ping_redis(url: str) -> bool:
+    """Check whether Redis is reachable at the given URL.
+
+    Args:
+        url: The URL of the Redis server.
+
     Returns:
-        Redis client object if connection is successful, otherwise None.
+        True if the connection succeeds, False otherwise.
     """
     try:
-        client = _redis.Redis.from_url(url)
-        client.ping()
-        return client
-    except Exception:
-        return None
+        _redis.Redis.from_url(url).ping()
+    except _redis.ConnectionError:
+        return False
+    return True
 
 
 def try_connect_to_redis(url: str) -> _redis.Redis:

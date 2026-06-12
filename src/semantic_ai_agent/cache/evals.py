@@ -70,9 +70,7 @@ def get_model_cost(provider: str, model: str) -> dict[str, float]:
     return {"input": 0.001, "output": 0.002}
 
 
-def _harmonic_mean(
-    a: float,
-    b: float) -> float:
+def _harmonic_mean(a: float, b: float) -> float:
     if a + b == 0:
         return 0
     return 2 * a * b / (a + b)
@@ -94,6 +92,7 @@ class CacheEvaluator:
         self,
         true_labels: list[bool],
         cache_results: list[CacheResults],
+        *,
         is_from_full_retrieval: bool = False,
     ) -> None:
         self.true_labels = np.array(true_labels)
@@ -102,9 +101,8 @@ class CacheEvaluator:
 
     @classmethod
     def from_full_retrieval(
-        cls,
-        true_labels: list[bool],
-        cache_results: list[CacheResults]) -> "CacheEvaluator":
+        cls, true_labels: list[bool], cache_results: list[CacheResults]
+    ) -> "CacheEvaluator":
         """Create evaluator from full retrieval results.
 
         Returns:
@@ -125,14 +123,12 @@ class CacheEvaluator:
         ]
         true_label = self.true_labels.tolist()
 
-        return pd.DataFrame(
-            {
-                "query": query,
-                "match": match,
-                "distance": distance,
-                "true_label": true_label,
-            }
-        )
+        return pd.DataFrame({
+            "query": query,
+            "match": match,
+            "distance": distance,
+            "true_label": true_label,
+        })
 
     def get_metrics(self, distance_threshold: float | None = None) -> dict[str, Any]:
         """
@@ -144,9 +140,9 @@ class CacheEvaluator:
         """
         T = 1 if distance_threshold is None else distance_threshold
 
-        has_retrieval = np.array(
-            [len([m for m in it.matches if m.vector_distance < T]) > 0 for it in self.cache_results]
-        )
+        has_retrieval = np.array([
+            len([m for m in it.matches if m.vector_distance < T]) > 0 for it in self.cache_results
+        ])
         true_labels = np.array(self.true_labels)
 
         if self.is_from_full_retrieval:
@@ -276,16 +272,15 @@ class PerfEval:
         input_tokens = count_tokens(input_text, model)
         output_tokens = count_tokens(output_text, model)
 
-        self.llm_calls.append(
-            {
-                "model": model,
-                "provider": provider,
-                "in": input_tokens,
-                "out": output_tokens,
-            }
-        )
+        self.llm_calls.append({
+            "model": model,
+            "provider": provider,
+            "in": input_tokens,
+            "out": output_tokens,
+        })
 
-    def _stats(self, values: list[float]) -> dict[str, float]:
+    @staticmethod
+    def _stats(values: list[float]) -> dict[str, float]:
         """Calculate statistics for a list of duration values.
 
         Returns:
@@ -377,7 +372,11 @@ class PerfEval:
             lines.append(f"Total Queries: {self.total_queries}")
 
         overall = metrics["overall"]
-        lines.extend((f"Average Latency: {overall['average_latency_ms']:.1f}ms", f"P50 Latency: {overall['p50_ms']:.1f}ms", f"P95 Latency: {overall['p95_ms']:.1f}ms"))
+        lines.extend((
+            f"Average Latency: {overall['average_latency_ms']:.1f}ms",
+            f"P50 Latency: {overall['p50_ms']:.1f}ms",
+            f"P95 Latency: {overall['p95_ms']:.1f}ms",
+        ))
 
         if labels:
             lines.extend(("", "By Label:"))
@@ -385,11 +384,16 @@ class PerfEval:
                 if label in metrics["by_label"]:
                     stats = metrics["by_label"][label]
                     lines.append(
-                        f"  {label}: {stats['count']} calls, {stats['average_latency_ms']:.1f}ms avg"
+                        f"  {label}: {stats['count']} calls, \
+                                 {stats['average_latency_ms']:.1f}ms avg"
                     )
 
         if costs["calls"] > 0:
-            lines.extend(("", f"LLM Calls: {costs['calls']}", f"Total Cost: ${costs['total_cost']:.4f}"))
+            lines.extend((
+                "",
+                f"LLM Calls: {costs['calls']}",
+                f"Total Cost: ${costs['total_cost']:.4f}",
+            ))
             if "avg_cost_per_query" in costs:
                 lines.append(f"Avg Cost/Query: ${costs['avg_cost_per_query']:.6f}")
 

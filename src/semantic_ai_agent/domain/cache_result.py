@@ -1,6 +1,5 @@
 """Cache result domain models."""
 
-
 from .base import DomainBase
 
 

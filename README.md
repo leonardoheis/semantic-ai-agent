@@ -114,6 +114,7 @@ If you have an NVIDIA GPU with CUDA 12.8 support, PyTorch CUDA wheels are automa
 
 ```python
 import torch
+
 print(torch.cuda.is_available())  # True if GPU is detected
 print(torch.cuda.get_device_name(0))
 ```

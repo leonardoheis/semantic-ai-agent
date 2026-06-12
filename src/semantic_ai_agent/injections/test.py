@@ -22,9 +22,6 @@ class MockCacheQueryService:
     def check(
         self,
         query: str,
-        distance_threshold: float | None = None,
-        num_results: int = 1,
-        use_reranker_distance: bool = False,
     ) -> CacheResults:
         if query in self.entries:
             return CacheResults(
@@ -40,17 +37,8 @@ class MockCacheQueryService:
             )
         return CacheResults(query=query, matches=[])
 
-    def check_many(self, queries: list[str], **kwargs: Any) -> list[CacheResults]:
+    def check_many(self, queries: list[str]) -> list[CacheResults]:
         return [self.check(q) for q in queries]
-
-    def register_reranker(self, reranker: Any) -> None:
-        pass
-
-    def clear_reranker(self) -> None:
-        pass
-
-    def has_reranker(self) -> bool:
-        return False
 
 
 class MockCacheStoreService:
@@ -59,7 +47,7 @@ class MockCacheStoreService:
     def __init__(self, query_service: MockCacheQueryService) -> None:
         self._query_service = query_service
 
-    def store(self, prompt: str, response: str, **kwargs: Any) -> None:
+    def store(self, prompt: str, response: str) -> None:
         self._query_service.entries[prompt] = response
 
 
@@ -69,18 +57,19 @@ class MockCacheHydrationService:
     def __init__(self) -> None:
         self.entries: dict[str, str] = {}
 
-    def hydrate(self, faq_path: str | None = None) -> HydrateResult:
+    @staticmethod
+    def hydrate(
+        faq_path: str | None = None,
+    ) -> HydrateResult:
         if faq_path and not Path(faq_path).exists():
             raise FaqFileNotFoundError(detail=f"FAQ file not found: {faq_path}")
         return HydrateResult(entries_loaded=0, categories=[])
 
-    def hydrate_from_df(
-        self, df: Any, *, q_col: str = "question", a_col: str = "answer", **kw: Any
-    ) -> None:
+    def hydrate_from_df(self, df: Any, *, q_col: str = "question", a_col: str = "answer") -> None:
         for _, row in df.iterrows():
             self.entries[row[q_col]] = row[a_col]
 
-    def hydrate_from_pairs(self, pairs: Any, **kw: Any) -> None:
+    def hydrate_from_pairs(self, pairs: Any) -> None:
         for q, a in pairs:
             self.entries[q] = a
 
@@ -113,7 +102,10 @@ class MockCacheStatsService:
 class MockLLM:
     """Mock LLM that returns a fixed response."""
 
-    def invoke(self, messages: list[dict[str, str]]) -> MagicMock:
+    @staticmethod
+    def invoke(
+        messages: list[dict[str, str]],
+    ) -> MagicMock:
         last_user = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
         mock_resp = MagicMock()
         mock_resp.content = f"[Mock LLM response for: {last_user}]"

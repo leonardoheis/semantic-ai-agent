@@ -21,13 +21,13 @@ router = APIRouter(prefix="/cache", tags=["cache"])
 @router.post("/hydrate")
 @inject
 def hydrate_cache(
-    body: Annotated[HydrateRequest, Body(openapi_examples=EXAMPLES)],
+    _body: Annotated[HydrateRequest, Body(openapi_examples=EXAMPLES)],
     svc: CacheHydrationServiceDependency,
 ) -> HydrateResponse:
     try:
         result = svc.hydrate()
     except FaqFileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=e.detail)
+        raise HTTPException(status_code=404, detail=e.detail) from e
     return HydrateResponse(entries_loaded=result.entries_loaded, categories=result.categories)
 
 

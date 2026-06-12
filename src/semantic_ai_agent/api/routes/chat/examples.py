@@ -7,12 +7,14 @@ from .schema import ChatRequest
 CHAT_EXAMPLES: dict[str, Example] = {
     "new_session": {
         "summary": "New session",
-        "description": "Start a **new** conversation session — no `session_id` required.",
+        "description": "Start a **new** conversation session — no \
+        `session_id` required.",
         "value": ChatRequest.create_example().model_dump(),
     },
     "continue_session": {
         "summary": "Continue session",
-        "description": "Continue an **existing** session by passing the `session_id` returned by a prior call.",
+        "description": "Continue an **existing** session by passing the \
+        `session_id` returned by a prior call.",
         "value": ChatRequest.create_example(
             message="Does that apply to part-time employees too?"
         ).model_dump()

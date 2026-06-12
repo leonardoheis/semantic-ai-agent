@@ -20,8 +20,8 @@ class _Settings(BaseSettings):
     UI_PORT: int = 10000
     API_PORT: int = 8000
     REDIS_PORT: int = 6379
-    HOST: str = "0.0.0.0"
-    REDIS: str = "0.0.0.0"
+    HOST: str = "0.0.0.0"  # noqa: S104
+    REDIS_HOST: str = "0.0.0.0"  # noqa: S104
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
@@ -43,7 +43,7 @@ class _Settings(BaseSettings):
 
     @property
     def REDIS_URL(self) -> str:
-        return f"redis://{self.REDIS}:{{port}}"
+        return f"redis://{self.REDIS_HOST}:{{port}}"
 
     @property
     def UI_EXECUTABLE(self) -> Path:
@@ -58,10 +58,6 @@ class _Settings(BaseSettings):
     @property
     def API_HOST(self) -> str:
         return self.SOCKET_URL.format(port=self.API_PORT)
-
-    @property
-    def REDIS_HOST(self) -> str:
-        return self.REDIS_URL.format(port=self.REDIS_PORT)
 
 
 Settings = _Settings()

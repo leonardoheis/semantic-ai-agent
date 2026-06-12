@@ -2,6 +2,9 @@
 
 from semantic_ai_agent.injections.test import create_mock_chat_service
 
+HISTORY_LENGTH = 4  # 2 user + 2 assistant
+DISTANCE_THRESHOLD = 0.0
+
 
 def test_ask_returns_llm_on_miss() -> None:
     svc = create_mock_chat_service()
@@ -17,7 +20,7 @@ def test_ask_returns_cache_hit_after_store() -> None:
     result = svc.ask("What is PTO?")
     assert result["source"] == "cache_hit"
     assert result["answer"] == "15 days."
-    assert result["distance"] == 0.0
+    assert result["distance"] == DISTANCE_THRESHOLD
 
 
 def test_session_persists_across_calls() -> None:
@@ -27,7 +30,7 @@ def test_session_persists_across_calls() -> None:
     r2 = svc.ask("Follow-up", session_id=sid)
     assert r2["session_id"] == sid
     history = svc.get_history(sid)
-    assert len(history) == 4  # 2 user + 2 assistant
+    assert len(history) == HISTORY_LENGTH
 
 
 def test_new_session_created_when_none() -> None:

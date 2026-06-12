@@ -26,6 +26,7 @@ class CacheQueryService(DomainBase):
         query: str,
         distance_threshold: float | None = None,
         num_results: int = 1,
+        *,
         use_reranker_distance: bool = False,
     ) -> CacheResults:
         """Check the semantic cache for a matching entry.
@@ -70,6 +71,7 @@ class CacheQueryService(DomainBase):
         self,
         queries: list[str],
         distance_threshold: float | None = None,
+        *,
         show_progress: bool = False,
         num_results: int = 1,
         use_reranker_distance: bool = False,

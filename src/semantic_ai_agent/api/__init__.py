@@ -7,7 +7,7 @@ from semantic_ai_agent.settings import Settings
 from .app import create_app
 
 
-def run_api() -> None:
+def run_api() -> None:  # noqa: RUF067
     uvicorn.run(
         "semantic_ai_agent.api.app:app",
         host=Settings.HOST,

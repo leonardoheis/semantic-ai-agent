@@ -23,9 +23,9 @@ def chat(
     try:
         result = svc.ask(message=body.message, session_id=body.session_id)
     except ConnectionError as e:
-        raise CacheConnectionError(detail=str(e))
+        raise CacheConnectionError(detail=str(e)) from e
     except Exception as e:
         if "openai" in (getattr(type(e), "__module__", "") or "").lower():
-            raise LLMError(detail=str(e))
+            raise LLMError(detail=str(e)) from e
         raise
     return ChatResponse.model_validate(result)

@@ -23,9 +23,10 @@ class CacheHydrationService(DomainBase):
     def hydrate(self) -> HydrateResult:
         """Load FAQ data from disk and populate the semantic cache.
         Returns:
-            HydrateResult with the number of entries loaded and category list.            
+            HydrateResult with the number of entries loaded and category list.
         Raises:
-                CacheHydrationError: If the FAQ data cannot be loaded or the cache cannot be populated.
+                CacheHydrationError: If the FAQ data cannot be loaded or the cache
+                cannot be populated.
         """
         try:
             entries = load_faq_json(Settings.DEFAULT_FAQ_PATH)
@@ -47,8 +48,7 @@ class CacheHydrationService(DomainBase):
         ttl_override: int | None = None,
     ) -> None:
         """Populate the cache from a DataFrame.
-        Returns:
-            None if the cache is successfully populated.
+
         Raises:
             CacheHydrationError: If the FAQ data cannot be loaded or the cache cannot be populated.
         """
@@ -67,8 +67,7 @@ class CacheHydrationService(DomainBase):
         ttl_override: int | None = None,
     ) -> None:
         """Populate the cache from an iterable of (question, answer) pairs.
-        Returns:
-            None if the cache is successfully populated.
+
         Raises:
             CacheHydrationError: If the FAQ data cannot be loaded or the cache cannot be populated.
         """

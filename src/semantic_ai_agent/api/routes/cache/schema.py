@@ -1,6 +1,5 @@
 """Cache route request/response schemas."""
 
-
 from pydantic import Field
 
 from semantic_ai_agent.api.schema import BaseSchema

@@ -12,6 +12,7 @@ class CacheReader(Protocol):
         query: str,
         distance_threshold: float | None = None,
         num_results: int = 1,
+        *,
         use_reranker_distance: bool = False,
     ) -> CacheResults: ...
 
