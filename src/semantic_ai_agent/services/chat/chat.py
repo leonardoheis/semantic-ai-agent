@@ -8,11 +8,12 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from semantic_ai_agent.domain.chat_message import ChatMessage
 from semantic_ai_agent.domain.chat_result import ChatResult
+from semantic_ai_agent.domain.protocols import CacheReader, CacheWriter
 
 
 class ChatService(BaseModel):
-    cache: Any = Field(..., description="CacheQueryService — used for lookups.")
-    store: Any = Field(..., description="CacheStoreService — used for writing new entries.")
+    cache: CacheReader = Field(..., description="CacheQueryService — used for lookups.")
+    store: CacheWriter = Field(..., description="CacheStoreService — used for writing new entries.")
     llm: Any = Field(..., description="The LLM to use for generating responses.")
     system_prompt: str = Field(
         ..., description="The system prompt to use for generating responses."

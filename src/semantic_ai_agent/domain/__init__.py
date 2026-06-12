@@ -8,6 +8,8 @@ from .chat_message import ChatMessage
 from .faq_data import FaqEntry
 from .hydrate_result import HydrateResult
 from .chat_result import ChatResult
+from .protocols import CacheReader, CacheWriter
+
 
 __all__ = [
     "CacheEntry",
@@ -19,4 +21,6 @@ __all__ = [
     "FaqEntry",
     "HydrateResult",
     "ChatResult",
+    "CacheReader",
+    "CacheWriter",
 ]

@@ -116,7 +116,7 @@ testpaths = ["tests"]
 lint = { shell = "ruff check . && ruff format --check ." }
 fmt = "ruff format ."
 typecheck = { shell = "mypy src && nbqa mypy notebooks" }
-nbtest = "pytest --nbmake notebooks"
+nbtest = { cmd = "pytest --nbmake notebooks", env = { USE_MOCK_LLM = "true" } }
 test = "pytest tests"
 check = ["lint", "typecheck", "nbtest"]
 serve = "uvicorn semantic_ai_agent.api.app:app --reload --port 8000"

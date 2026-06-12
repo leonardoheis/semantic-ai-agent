@@ -11,7 +11,8 @@ class _Settings(BaseSettings):
     CACHE_NAME: str = "semantic-cache"
     CACHE_DISTANCE_THRESHOLD: float = 0.3
     CACHE_TTL_SECONDS: int = 3600
-    OPENAI_MODEL: str = "gpt-5.1"
+    OPENAI_MODEL: str = "gpt-4o-mini"
+    USE_MOCK_LLM: bool = False
     HR_SYSTEM_PROMPT: str = (
         "You are an HR policy assistant. Answer the employee's question about company policies "
         "concisely and accurately in 2-3 sentences."
