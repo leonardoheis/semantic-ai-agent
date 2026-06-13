@@ -19,4 +19,8 @@ class CacheReader(Protocol):
 
 @runtime_checkable
 class CacheWriter(Protocol):
-    def store(self, prompt: str, response: str, **kwargs: object) -> None: ...
+    def store(
+        self,
+        prompt: str,
+        response: str,
+    ) -> None: ...

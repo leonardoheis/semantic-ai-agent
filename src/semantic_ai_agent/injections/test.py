@@ -22,20 +22,27 @@ class MockCacheQueryService:
     def check(
         self,
         query: str,
+        distance_threshold: float | None = None,
+        num_results: int = 1,
+        *,
+        use_reranker_distance: bool = False,
     ) -> CacheResults:
-        if query in self.entries:
-            return CacheResults(
-                query=query,
-                matches=[
-                    CacheResult(
-                        prompt=query,
-                        response=self.entries[query],
-                        vector_distance=0.0,
-                        cosine_similarity=1.0,
-                    )
-                ],
-            )
-        return CacheResults(query=query, matches=[])
+        if query not in self.entries:
+            return CacheResults(query=query, matches=[])
+
+        threshold = 1.0 if distance_threshold is None else distance_threshold
+        distance = 0.0 if use_reranker_distance else 0.1
+
+        if distance >= threshold:
+            return CacheResults(query=query, matches=[])
+
+        match = CacheResult(
+            prompt=query,
+            response=self.entries[query],
+            vector_distance=distance,
+            cosine_similarity=1.0,
+        )
+        return CacheResults(query=query, matches=[match][:num_results])
 
     def check_many(self, queries: list[str]) -> list[CacheResults]:
         return [self.check(q) for q in queries]
@@ -152,8 +159,8 @@ def create_mock_chat_service() -> ChatService:
     store_svc = MockCacheStoreService(query_service=query_svc)
     llm = MockLLM()
     return ChatService(
-        cache=query_svc,  # type: ignore[arg-type]
-        store=store_svc,  # type: ignore[arg-type]
-        llm=llm,  # type: ignore[arg-type]
+        cache=query_svc,
+        store=store_svc,
+        llm=llm,
         system_prompt="You are a test HR assistant.",
     )
